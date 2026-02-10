@@ -1,0 +1,154 @@
+{
+  "expo": {
+    "name": "Tito",
+    "slug": "tito",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icons/Mimo.png",
+    "scheme": "tito",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "updates": {
+      "url": "https://expo-updates.contentor.io/api/manifest",
+      "enabled": true,
+      "fallbackToCacheTimeout": 30000
+    },
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "CFBundleAllowMixedLocalizations": true,
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "bundleIdentifier": "com.startnode.tito",
+      "icon": "./assets/icons/mimo-icon.icon",
+      "appleTeamId": "6Q4ZHTCT23",
+      "entitlements": {
+        "com.apple.security.application-groups": [
+          "group.com.startnode.tito"
+        ]
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "package": "com.startnode.tito"
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/icons/Tito.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#FAF8F5",
+          "dark": {
+            "backgroundColor": "#1A1915"
+          }
+        }
+      ],
+      "expo-font",
+      "expo-audio",
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Manna necesita acceso a tu galería para guardar las imágenes de tus versículos cuando los compartas.",
+          "savePhotosPermission": "Manna necesita permiso para guardar las imágenes de tus versículos en tu galería.",
+          "isAccessMediaLocationEnabled": false
+        }
+      ],
+      "@bacons/apple-targets",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icons/MimoIcon.png"
+        }
+      ],
+      [
+        "expo-alternate-app-icons",
+        [
+          {
+            "name": "MimoVariant1",
+            "ios": {
+              "light": "./assets/icons/MimoIconVariant1Flat.png",
+              "dark": "./assets/icons/MimoIconVariant1Flat.png",
+              "tinted": "./assets/icons/MimoIconVariant1Flat.png"
+            },
+            "android": {
+              "foregroundImage": "./assets/icons/MimoIconVariant1Flat.png",
+              "backgroundColor": "#FF9A56"
+            }
+          },
+          {
+            "name": "MimoVariant2",
+            "ios": {
+              "light": "./assets/icons/MimoIconVariant2Flat.png",
+              "dark": "./assets/icons/MimoIconVariant2Flat.png",
+              "tinted": "./assets/icons/MimoIconVariant2Flat.png"
+            },
+            "android": {
+              "foregroundImage": "./assets/icons/MimoIconVariant2Flat.png",
+              "backgroundColor": "#FFF5EB"
+            }
+          },
+          {
+            "name": "MimoVariant3",
+            "ios": {
+              "light": "./assets/icons/MimoIconVariant3Flat.png",
+              "dark": "./assets/icons/MimoIconVariant3Flat.png",
+              "tinted": "./assets/icons/MimoIconVariant3Flat.png"
+            },
+            "android": {
+              "foregroundImage": "./assets/icons/MimoIconVariant3Flat.png",
+              "backgroundColor": "#FF9A56"
+            }
+          },
+          {
+            "name": "MimoVariant4",
+            "ios": {
+              "light": "./assets/icons/MimoIconVariant4Flat.png",
+              "dark": "./assets/icons/MimoIconVariant4Flat.png",
+              "tinted": "./assets/icons/MimoIconVariant4Flat.png"
+            },
+            "android": {
+              "foregroundImage": "./assets/icons/MimoIconVariant4Flat.png",
+              "backgroundColor": "#FFF5EB"
+            }
+          },
+          {
+            "name": "MimoVariant5",
+            "ios": {
+              "light": "./assets/icons/MimoIconVariant5Flat.png",
+              "dark": "./assets/icons/MimoIconVariant5Flat.png",
+              "tinted": "./assets/icons/MimoIconVariant5Flat.png"
+            },
+            "android": {
+              "foregroundImage": "./assets/icons/MimoIconVariant5Flat.png",
+              "backgroundColor": "#FFF5EB"
+            }
+          }
+        ]
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "3ecc2c9f-f205-4126-94be-ed6a167c2e2a"
+      }
+    }
+  }
+}
