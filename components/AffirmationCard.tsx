@@ -1,5 +1,5 @@
 // ============================================================================
-// AffirmationCard - Tarjeta de versículo con favoritos y audio
+// AffirmationCard - Tarjeta de afirmación con favoritos y audio
 // ============================================================================
 
 import { memo, useCallback } from 'react';
@@ -9,13 +9,13 @@ import { FontAwesome } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Spacing, Typography, BorderRadius, ThemeColors } from '@/constants/theme';
 import { useColors, useTheme } from '@/hooks';
-import type { Verse } from '@/types';
+import type { Affirmation } from '@/types';
 
 interface AffirmationCardProps {
-  affirmation: Verse;
+  affirmation: Affirmation;
   isFavorite: boolean;
-  onToggleFavorite: (affirmation: Verse) => void;
-  onPlayAudio?: (affirmation: Verse) => void;
+  onToggleFavorite: (affirmation: Affirmation) => void;
+  onPlayAudio?: (affirmation: Affirmation) => void;
   index?: number;
 }
 
@@ -60,15 +60,8 @@ function AffirmationCardComponent({
       style={styles.container}
     >
       <View style={styles.content}>
-        {/* Texto del versículo */}
-        <Text style={styles.affirmationText}>“{affirmation.text}”</Text>
-
-        {/* Referencia bíblica */}
-        {affirmation.reference && (
-          <Text style={[styles.referenceText, { color: colors.textSecondary }]}>
-            — {affirmation.reference}
-          </Text>
-        )}
+        {/* Texto de la afirmación */}
+        <Text style={styles.affirmationText}>"{affirmation.title || affirmation.text}"</Text>
 
         {/* Acciones */}
         <View style={styles.actions}>
@@ -155,13 +148,6 @@ const createStyles = (colors: ThemeColors) =>
       lineHeight: Typography.fontSize.h3 * 1.4,
       marginBottom: Spacing.l,
       fontFamily: Typography.fontFamily.heading,
-    },
-    referenceText: {
-      fontSize: Typography.fontSize.caption,
-      fontWeight: Typography.fontWeight.medium,
-      fontStyle: 'italic',
-      marginBottom: Spacing.l,
-      fontFamily: Typography.fontFamily.body,
     },
     actions: {
       flexDirection: 'row',

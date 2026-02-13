@@ -21,39 +21,45 @@ export const APP_ICONS: {
 }[] = [
   { 
     id: 'default', 
-    name: 'Versículo Original', 
+    name: 'Tito Original', 
     isPremium: false,
-    iconSource: require('@/assets/icons/MimoIcon.png'),
+    iconSource: require('@/assets/icons/titoIcon.png'),
   },
   { 
     id: 'variant-1', 
-    name: 'Versículo Sunset', 
+    name: 'Tito Sunset', 
     isPremium: true,
-    iconSource: require('@/assets/icons/MimoIconVariant1Flat.png'),
+    iconSource: require('@/assets/icons/titoIconFlat.png'),
   },
   { 
     id: 'variant-2', 
-    name: 'Versículo Azul', 
+    name: 'Tito Text', 
     isPremium: true,
-    iconSource: require('@/assets/icons/MimoIconVariant2Flat.png'),
+    iconSource: require('@/assets/icons/titoIconFlat2.png'),
   },
   { 
     id: 'variant-3', 
-    name: 'Versículo Dorado', 
+    name: 'Tito Text', 
     isPremium: true,
-    iconSource: require('@/assets/icons/MimoIconVariant3Flat.png'),
+    iconSource: require('@/assets/icons/titoPeekingIconFlat.png'),
   },
   { 
     id: 'variant-4', 
-    name: 'Versículo Sereno', 
+    name: 'Tito Text', 
     isPremium: true,
-    iconSource: require('@/assets/icons/MimoIconVariant4Flat.png'),
+    iconSource: require('@/assets/icons/titoPrayingIconFlat.png'),
   },
   { 
     id: 'variant-5', 
-    name: 'Versículo Clásico', 
+    name: 'Tito Text', 
     isPremium: true,
-    iconSource: require('@/assets/icons/MimoIconVariant5Flat.png'),
+    iconSource: require('@/assets/icons/titoReadingIconFlat.png'),
+  },
+  { 
+    id: 'variant-6', 
+    name: 'Tito Text', 
+    isPremium: true,
+    iconSource: require('@/assets/icons/titoSleepingIconFlat.png'),
   },
 ];
 

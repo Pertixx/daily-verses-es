@@ -5,11 +5,11 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { storageService } from './storage.service';
-import { verseService } from './verse.service';
+import { affirmationService } from './affirmation.service';
 import { revenueCatService } from './revenuecat.service';
 import { analytics } from './analytics.service';
-import type { NotificationSettings, Verse, VerseCategory } from '@/types';
-import { VERSE_CATEGORIES } from '@/types';
+import type { NotificationSettings, Affirmation, AffirmationCategory } from '@/types';
+import { getAvailableCategories } from './category.service';
 
 /**
  * Configuración del comportamiento de notificaciones
@@ -18,10 +18,10 @@ Notifications.setNotificationHandler({
   handleNotification: async (notification) => {
     // Trackear que se recibió una notificación
     const data = notification.request.content.data;
-    const notificationType = (data?.type as string) || 'verse';
+    const notificationType = (data?.type as string) || 'affirmation';
     analytics.track('notification_received', { 
       notification_type: notificationType,
-      verse_id: data?.verseId as string | undefined
+      affirmation_id: data?.affirmationId as string | undefined
     });
     
     return {
@@ -39,14 +39,14 @@ Notifications.setNotificationHandler({
  */
 class NotificationService {
   /**
-   * Obtiene versículos aleatorios del mix activo del usuario
-   * @param count - Cantidad de versículos a obtener
+   * Obtiene afirmaciones aleatorias del mix activo del usuario
+   * @param count - Cantidad de afirmaciones a obtener
    */
-  private async getRandomVersesFromActiveMix(count: number): Promise<Verse[]> {
+  private async getRandomAffirmationsFromActiveMix(count: number): Promise<Affirmation[]> {
     try {
       const activeMix = await storageService.getActiveMix();
       const profile = await storageService.getProfile();
-      const defaultCategories = profile?.assignedCategories || ['faith', 'strength', 'love'];
+      const defaultCategories = profile?.assignedCategories || ['self_love', 'motivation', 'positivity'];
       
       // Verificar si el usuario es premium
       let isPremium = false;
@@ -56,39 +56,41 @@ class NotificationService {
         console.error('Error checking premium status for notifications:', error);
       }
 
+      // Cargar categorías disponibles dinámicamente
+      const allCategories = await getAvailableCategories();
+
       // Helper para filtrar categorías premium si el usuario no es premium
-      const filterCategoriesByAccess = (categories: VerseCategory[]): VerseCategory[] => {
+      const filterCategoriesByAccess = (categories: AffirmationCategory[]): AffirmationCategory[] => {
         if (isPremium) return categories;
         return categories.filter(catId => {
-          const catConfig = VERSE_CATEGORIES.find(c => c.id === catId);
+          const catConfig = allCategories.find(c => c.id === catId);
           return catConfig && !catConfig.isPremium;
         });
       };
       
-      let allVerses: Verse[] = [];
+      let allAffirmations: Affirmation[] = [];
 
       if (!activeMix || activeMix.mixType === 'personalized') {
         // Mix personalizado del onboarding - filtrar categorías premium
         const accessibleCategories = filterCategoriesByAccess(defaultCategories);
-        allVerses = verseService.getVersesByCategories(accessibleCategories);
+        allAffirmations = await affirmationService.getAffirmationsByCategories(accessibleCategories);
       } else if (activeMix.mixType === 'category') {
         // Mix de una sola categoría - verificar si tiene acceso
-        const categoryId = activeMix.mixId.replace('category-', '') as VerseCategory;
-        const catConfig = VERSE_CATEGORIES.find(c => c.id === categoryId);
+        const categoryId = activeMix.mixId.replace('category-', '') as AffirmationCategory;
+        const catConfig = allCategories.find(c => c.id === categoryId);
         if (catConfig?.isPremium && !isPremium) {
           // No tiene acceso, usar categorías por defecto filtradas
           const accessibleCategories = filterCategoriesByAccess(defaultCategories);
-          allVerses = verseService.getVersesByCategories(accessibleCategories);
+          allAffirmations = await affirmationService.getAffirmationsByCategories(accessibleCategories);
         } else {
-          allVerses = verseService.getVersesByCategory(categoryId);
+          allAffirmations = await affirmationService.getAffirmationsByCategory(categoryId);
         }
       } else if (activeMix.mixType === 'favorites') {
         // Mix de favoritos
         const favorites = await storageService.getFavorites();
-        allVerses = favorites.map((fav) => ({
+        allAffirmations = favorites.map((fav) => ({
           id: fav.id,
           text: fav.text,
-          reference: (fav as any).reference || '',
           audioSource: undefined,
           audioDuration: undefined,
         }));
@@ -96,13 +98,12 @@ class NotificationService {
         // Mix de frases propias (solo premium)
         if (!isPremium) {
           const accessibleCategories = filterCategoriesByAccess(defaultCategories);
-          allVerses = verseService.getVersesByCategories(accessibleCategories);
+          allAffirmations = await affirmationService.getAffirmationsByCategories(accessibleCategories);
         } else {
           const customPhrases = await storageService.getCustomPhrases();
-          allVerses = customPhrases.map((phrase) => ({
+          allAffirmations = customPhrases.map((phrase) => ({
             id: phrase.id,
             text: phrase.text,
-            reference: '',
             audioSource: undefined,
             audioDuration: undefined,
           }));
@@ -111,32 +112,32 @@ class NotificationService {
         // Mix custom del usuario (solo premium)
         if (!isPremium) {
           const accessibleCategories = filterCategoriesByAccess(defaultCategories);
-          allVerses = verseService.getVersesByCategories(accessibleCategories);
+          allAffirmations = await affirmationService.getAffirmationsByCategories(accessibleCategories);
         } else {
           const userMixes = await storageService.getUserCustomMixes();
           const userMix = userMixes.find((m) => m.id === activeMix.mixId);
           if (userMix && userMix.categories.length > 0) {
             // Premium users tienen acceso a todas las categorías de su mix
-            allVerses = verseService.getVersesByCategories(userMix.categories);
+            allAffirmations = await affirmationService.getAffirmationsByCategories(userMix.categories);
           } else {
-            allVerses = verseService.getVersesByCategories(defaultCategories);
+            allAffirmations = await affirmationService.getAffirmationsByCategories(defaultCategories);
           }
         }
       } else {
         const accessibleCategories = filterCategoriesByAccess(defaultCategories);
-        allVerses = verseService.getVersesByCategories(accessibleCategories);
+        allAffirmations = await affirmationService.getAffirmationsByCategories(accessibleCategories);
       }
 
-      // Si no hay versículos, usar los por defecto
-      if (allVerses.length === 0) {
-        allVerses = verseService.getVersesByCategories(defaultCategories);
+      // Si no hay afirmaciones, usar las por defecto
+      if (allAffirmations.length === 0) {
+        allAffirmations = await affirmationService.getAffirmationsByCategories(defaultCategories);
       }
 
       // Mezclar y tomar la cantidad necesaria
-      const shuffled = this.shuffleArray([...allVerses]);
+      const shuffled = this.shuffleArray([...allAffirmations]);
       return shuffled.slice(0, Math.min(count, shuffled.length));
     } catch (error) {
-      console.error('Error al obtener versículos para notificaciones:', error);
+      console.error('Error al obtener afirmaciones para notificaciones:', error);
       return [];
     }
   }
@@ -173,10 +174,10 @@ class NotificationService {
       // Configuración específica de Android
       if (Platform.OS === 'android') {
         await Notifications.setNotificationChannelAsync('default', {
-          name: 'Versículos Diarios',
+          name: 'Versículos Tito',
           importance: Notifications.AndroidImportance.MAX,
           vibrationPattern: [0, 250, 250, 250],
-          lightColor: '#5B7FCC',
+          lightColor: '#B5E8E0',
         });
       }
 
@@ -189,22 +190,22 @@ class NotificationService {
   }
 
   /**
-   * Programa las notificaciones de versículos según la configuración del usuario
+   * Programa las notificaciones de afirmaciones según la configuración del usuario
    */
-  async scheduleVerseNotifications(
+  async scheduleAffirmationNotifications(
     settings: NotificationSettings
   ): Promise<boolean> {
     try {
       if (!settings.enabled) {
-        await this.cancelAllVerseNotifications();
+        await this.cancelAllAffirmationNotifications();
         return true;
       }
 
       // Cancelar notificaciones previas
-      await this.cancelAllVerseNotifications();
+      await this.cancelAllAffirmationNotifications();
 
-      // Obtener versículos reales del mix activo del usuario
-      const verses = await this.getRandomVersesFromActiveMix(settings.frequency);
+      // Obtener afirmaciones reales del mix activo del usuario
+      const affirmations = await this.getRandomAffirmationsFromActiveMix(settings.frequency);
 
       // Parsear horas
       const [startHour, startMinute] = settings.startTime.split(':').map(Number);
@@ -216,21 +217,21 @@ class NotificationService {
       const totalMinutes = endTotalMinutes - startTotalMinutes;
       const intervalMinutes = Math.floor(totalMinutes / settings.frequency);
 
-      // Programar cada notificación con un versículo real
+      // Programar cada notificación con una afirmación real
       for (let i = 0; i < settings.frequency; i++) {
         const notificationMinutes = startTotalMinutes + (intervalMinutes * i);
         const hour = Math.floor(notificationMinutes / 60);
         const minute = notificationMinutes % 60;
 
-        // Usar el versículo correspondiente o reciclar si hay menos versículos que notificaciones
-        const verse = verses[i % verses.length];
-        const verseText = verse?.text || 'Es momento de leer la Palabra de Dios ✝️';
+        // Usar la afirmación correspondiente o reciclar si hay menos afirmaciones que notificaciones
+        const affirmation = affirmations[i % affirmations.length];
+        const affirmationText = affirmation?.title || affirmation?.text || 'Es momento de leer la Palabra de Dios ✨';
 
         await Notifications.scheduleNotificationAsync({
           content: {
-            title: '✝️ Tu versículo del día',
-            body: verseText,
-            data: { type: 'verse', index: i, verseId: verse?.id },
+            title: '✨ Tu versículo',
+            body: affirmationText,
+            data: { type: 'affirmation', index: i, affirmationId: affirmation?.id },
             sound: true,
           },
           trigger: {
@@ -242,7 +243,7 @@ class NotificationService {
       }
 
       console.log(
-        `✅ Programadas ${settings.frequency} notificaciones con versículos`
+        `✅ Programadas ${settings.frequency} notificaciones con afirmaciones reales`
       );
       return true;
     } catch (error) {
@@ -270,8 +271,7 @@ class NotificationService {
         identifier: 'streak-reminder',
         content: {
           title: '🔥 ¡No pierdas tu racha!',
-          body: 'Aún no leíste tu versículo de hoy. ¡Mantené el hábito!',
-
+          body: 'Aún no has completado tu afirmación de hoy. ¡Mantén el impulso!',
           data: { type: 'streak-reminder' },
           sound: true,
         },
@@ -291,21 +291,21 @@ class NotificationService {
   }
 
   /**
-   * Cancela todas las notificaciones de versículos
+   * Cancela todas las notificaciones de afirmaciones
    */
-  async cancelAllVerseNotifications(): Promise<void> {
+  async cancelAllAffirmationNotifications(): Promise<void> {
     try {
       const scheduledNotifications = await Notifications.getAllScheduledNotificationsAsync();
       
       for (const notification of scheduledNotifications) {
-        if (notification.content.data?.type === 'verse' || notification.content.data?.type === 'affirmation') {
+        if (notification.content.data?.type === 'affirmation') {
           await Notifications.cancelScheduledNotificationAsync(
             notification.identifier
           );
         }
       }
     } catch (error) {
-      console.error('Error al cancelar notificaciones de versículos:', error);
+      console.error('Error al cancelar notificaciones de afirmaciones:', error);
     }
   }
 
@@ -338,8 +338,7 @@ class NotificationService {
         identifier: 'trial-reminder',
         content: {
           title: '⏰ Tu prueba gratis termina mañana',
-          body: 'Recordatorio: tu período de prueba gratuita de Versículo termina mañana. ¡Seguí disfrutando de todos los beneficios!',
-
+          body: 'Recordatorio: tu período de prueba gratuita de Tito termina mañana. ¡Seguí disfrutando de todos los beneficios!',
           data: { type: 'trial-reminder' },
           sound: true,
         },
@@ -400,7 +399,7 @@ class NotificationService {
       const settings = await storageService.getNotificationSettings();
       if (!settings) return false;
 
-      await this.scheduleVerseNotifications(settings);
+      await this.scheduleAffirmationNotifications(settings);
       await this.scheduleStreakReminder(settings);
 
       return true;

@@ -53,7 +53,7 @@ function WidgetCard({ size, colors, delay }: WidgetCardProps) {
         ]}
         numberOfLines={size === 'small' ? 3 : 4}
       >
-        {size === 'small' ? '✝️\nTu versículo aquí' : '✝️ Tu versículo iría aquí'}
+        {size === 'small' ? '✨\nTu afirmación aquí' : '✨ Tu afirmación iría aquí'}
       </Text>
     </Animated.View>
   );
@@ -149,16 +149,19 @@ export default function WidgetScreen() {
       analytics.flush();
 
       // Sincronizar widget en background (no bloquear navegación)
-      widgetService.syncVersesToWidget().catch(err => {
+      widgetService.syncAffirmationsToWidget().catch(err => {
         console.error('Error sincronizando widget:', err);
       });
 
-      // Navegar a complete
-      router.push('/(onboarding)/complete');
+      // Navegar directamente a home
+      // Usamos dismissAll + replace para limpiar el stack de onboarding
+      router.dismissAll();
+      router.replace('/');
     } catch (error) {
       console.error('Error al completar onboarding:', error);
-      // Aún en caso de error, intentar navegar
-      router.push('/(onboarding)/complete');
+      // Aún en caso de error, intentar navegar para no dejar al usuario atrapado
+      router.dismissAll();
+      router.replace('/');
     } finally {
       setIsLoading(false);
     }
@@ -181,8 +184,9 @@ export default function WidgetScreen() {
       }
     >
       <OnboardingHeader
+        icon={require('@/assets/icons/tito.png')}
         title="Agregá un widget a tu pantalla"
-        subtitle="Empezá el día con un versículo que fortalezca tu fe apenas te despertás"
+        subtitle="Empezá el día con afirmaciones que te levanten el ánimo apenas te despertás"
       />
 
       {/* iPhone Mockup with Widgets */}
@@ -196,7 +200,7 @@ export default function WidgetScreen() {
         style={styles.instructionsContainer}
       >
         <Text style={[styles.instructionText, { color: colors.textSecondary }]}>
-          Mantené presionada la pantalla de inicio → Tocá el botón + → Buscá "Versículo"
+          Mantené presionada la pantalla de inicio → Tocá el botón + → Buscá "Tito"
         </Text>
       </Animated.View>
     </OnboardingContainer>
@@ -239,7 +243,7 @@ const widgetStyles = StyleSheet.create({
   },
   time: {
     fontSize: 14,
-    fontFamily: 'Nunito_600SemiBold',
+    fontFamily: 'DMSans_600SemiBold',
   },
   widgetsContainer: {
     gap: 12,
@@ -266,7 +270,7 @@ const widgetStyles = StyleSheet.create({
   widgetText: {
     color: '#FFFFFF',
     fontSize: 11,
-    fontFamily: 'Nunito_600SemiBold',
+    fontFamily: 'DMSans_600SemiBold',
     textAlign: 'center',
     lineHeight: 14,
   },
@@ -318,7 +322,7 @@ const createStyles = (colors: ThemeColors) =>
     instructionText: {
       textAlign: 'center',
       fontSize: Typography.fontSize.caption,
-      fontFamily: 'Nunito_500Medium',
+      fontFamily: 'DMSans_500Medium',
       lineHeight: 20,
     },
   });

@@ -1,13 +1,12 @@
 // ============================================================================
-// Weekly Streak Calendar - Calendario semanal de constancia espiritual
+// Weekly Streak Calendar - Calendario semanal de racha
 // ============================================================================
 
 import { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Animated, { 
   FadeIn, 
-  FadeInUp,
-  SlideInRight,
+  FadeInDown,
 } from 'react-native-reanimated';
 import { FontAwesome } from '@expo/vector-icons';
 import { useColors } from '@/hooks';
@@ -44,7 +43,7 @@ interface DayInfo {
 // Constants
 // ============================================================================
 
-const DAYS_OF_WEEK = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+const DAYS_OF_WEEK = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
 
 // ============================================================================
 // Utility Functions
@@ -82,6 +81,7 @@ const generateWeekDays = (completedDays: string[]): DayInfo[] => {
   // Normalizar los días completados al formato YYYY-MM-DD (usando timezone local)
   const normalizedCompletedDays = new Set(
     completedDays.map(day => {
+      // Si viene con T, parsear y formatear con timezone local
       if (day.includes('T')) {
         const date = new Date(day);
         return formatDateToLocalISO(date);
@@ -106,107 +106,81 @@ const generateWeekDays = (completedDays: string[]): DayInfo[] => {
   });
 };
 
-/**
- * Devuelve un mensaje motivacional según los días completados
- */
-const getMotivationalMessage = (completed: number): string => {
-  if (completed === 7) return '¡Semana perfecta! Gloria a Dios 🙌';
-  if (completed >= 5) return '¡Excelente dedicación esta semana!';
-  if (completed >= 3) return 'Vas por buen camino, seguí así';
-  if (completed >= 1) return 'Cada día cuenta en tu camino de fe';
-  return 'Comenzá tu lectura de hoy';
-};
-
 // ============================================================================
 // Sub-components
 // ============================================================================
 
-interface DayTileProps {
+interface DayCircleProps {
   day: DayInfo;
   index: number;
 }
 
-const DayTile = ({ day, index }: DayTileProps) => {
+const DayCircle = ({ day, index }: DayCircleProps) => {
   const colors = useColors();
   
-  const tileStyle = useMemo(() => {
-    if (day.isCompleted && day.isToday) {
+  const getCircleStyle = () => {
+    if (day.isCompleted) {
       return {
         backgroundColor: colors.primary,
         borderColor: colors.primary,
-        borderWidth: 2,
-      };
-    }
-    if (day.isCompleted) {
-      return {
-        backgroundColor: `${colors.primary}18`,
-        borderColor: colors.primary,
-        borderWidth: 1.5,
       };
     }
     if (day.isToday) {
       return {
-        backgroundColor: colors.surface,
-        borderColor: colors.secondary,
+        backgroundColor: 'transparent',
+        borderColor: colors.primary,
         borderWidth: 2,
       };
     }
     return {
       backgroundColor: colors.surfaceSecondary,
-      borderColor: colors.borderLight,
-      borderWidth: 1,
+      borderColor: colors.border,
     };
-  }, [day.isCompleted, day.isToday, colors]);
-
-  const dayNameColor = day.isToday 
-    ? colors.secondary 
-    : day.isCompleted 
-      ? colors.primary 
-      : colors.textTertiary;
-
-  const dayNumberColor = day.isCompleted && day.isToday
-    ? '#FFFFFF'
-    : day.isCompleted
-      ? colors.primary
-      : day.isToday
-        ? colors.text
-        : colors.textSecondary;
+  };
+  
+  const getTextColor = () => {
+    if (day.isCompleted) {
+      return '#FFFFFF';
+    }
+    if (day.isToday) {
+      return colors.primary;
+    }
+    return colors.textSecondary;
+  };
 
   return (
     <Animated.View
-      entering={SlideInRight.delay(80 + index * 60).duration(350)}
-      style={styles.dayTileWrapper}
+      entering={FadeInDown.delay(index * 50).duration(300).springify()}
+      style={styles.dayContainer}
     >
-      <Text style={[styles.dayLabel, { color: dayNameColor }]}>
+      {/* Nombre del día */}
+      <Text style={[
+        styles.dayName,
+        { color: day.isToday ? colors.primary : colors.textTertiary }
+      ]}>
         {day.dayName}
       </Text>
       
-      <Animated.View style={[styles.dayTile, tileStyle]}>
+      {/* Círculo con el número */}
+      <Animated.View
+        style={[
+          styles.dayCircle,
+          getCircleStyle(),
+          day.isToday && !day.isCompleted && styles.todayCircle,
+        ]}
+      >
         {day.isCompleted ? (
-          <View style={styles.completedContent}>
-            <FontAwesome 
-              name="book" 
-              size={13} 
-              color={day.isToday ? '#FFFFFF' : colors.primary} 
-            />
-            <Text style={[
-              styles.tileNumber, 
-              { color: day.isToday ? '#FFFFFF' : colors.primary, fontSize: 11 }
-            ]}>
-              {day.dayNumber}
-            </Text>
-          </View>
+          <FontAwesome name="check" size={14} color="#FFFFFF" />
         ) : (
-          <Text style={[styles.tileNumber, { color: dayNumberColor }]}>
+          <Text style={[styles.dayNumber, { color: getTextColor() }]}>
             {day.dayNumber}
           </Text>
         )}
       </Animated.View>
-
+      
+      {/* Indicador de hoy */}
       {day.isToday && (
-        <View style={[styles.todayLabel, { backgroundColor: colors.secondary }]}>
-          <Text style={styles.todayLabelText}>Hoy</Text>
-        </View>
+        <View style={[styles.todayDot, { backgroundColor: colors.primary }]} />
       )}
     </Animated.View>
   );
@@ -222,84 +196,78 @@ export const WeeklyStreakCalendar = ({
 }: WeeklyStreakCalendarProps) => {
   const colors = useColors();
   
+  // Generar los días de la semana
   const weekDays = useMemo(() => {
     const completedDays = streakData?.completedDays ?? [];
     return generateWeekDays(completedDays);
   }, [streakData?.completedDays]);
   
+  // Contar días completados esta semana
   const completedThisWeek = useMemo(() => {
     return weekDays.filter(day => day.isCompleted).length;
   }, [weekDays]);
 
-  const currentStreak = streakData?.currentStreak ?? 0;
-  const longestStreak = streakData?.longestStreak ?? 0;
-
   return (
     <Animated.View
-      entering={FadeIn.duration(500)}
+      entering={FadeIn.duration(400)}
       style={[styles.container, { backgroundColor: colors.cardBackground }]}
     >
-      {/* Header con racha actual */}
-      <Animated.View 
-        entering={FadeInUp.delay(50).duration(400)}
-        style={styles.header}
-      >
-        <View style={styles.streakInfo}>
-          <View style={[styles.streakIcon, { backgroundColor: `${colors.secondary}20` }]}>
-            <Text style={styles.streakEmoji}>✝️</Text>
-          </View>
-          <View style={styles.streakTextBlock}>
-            <Text style={[styles.streakCount, { color: colors.text }]}>
-              {currentStreak} {currentStreak === 1 ? 'día' : 'días'}
-            </Text>
-            <Text style={[styles.streakSubtitle, { color: colors.textTertiary }]}>
-              de constancia
-            </Text>
-          </View>
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <FontAwesome name="fire" size={20} color={colors.primary} />
+          <Text style={[styles.headerTitle, { color: colors.text }]}>
+            Tu racha
+          </Text>
         </View>
-
-        {longestStreak > 0 && (
-          <View style={[styles.bestBadge, { backgroundColor: `${colors.secondary}15` }]}>
-            <FontAwesome name="star" size={10} color={colors.secondary} />
-            <Text style={[styles.bestBadgeText, { color: colors.secondary }]}>
-              {longestStreak}
-            </Text>
-          </View>
-        )}
-      </Animated.View>
-
-      {/* Tiles de la semana */}
-      <View style={styles.weekRow}>
+        <View style={[styles.streakBadge, { backgroundColor: colors.badgePrimaryBg }]}>
+          <Text style={[styles.streakBadgeText, { color: colors.primary }]}>
+            {streakData?.currentStreak ?? 0} días
+          </Text>
+        </View>
+      </View>
+      
+      {/* Calendario semanal */}
+      <View style={styles.weekContainer}>
         {weekDays.map((day, index) => (
-          <DayTile key={day.dateString} day={day} index={index} />
+          <DayCircle key={day.dateString} day={day} index={index} />
         ))}
       </View>
-
-      {/* Indicador de progreso segmentado */}
-      <Animated.View 
-        entering={FadeInUp.delay(600).duration(400)}
-        style={styles.footer}
-      >
-        <View style={styles.segmentRow}>
-          {Array.from({ length: 7 }, (_, i) => (
-            <View
-              key={i}
+      
+      {/* Footer con progreso */}
+      <View style={styles.footer}>
+        <View style={styles.progressContainer}>
+          <View 
+            style={[
+              styles.progressBar, 
+              { backgroundColor: colors.surfaceSecondary }
+            ]}
+          >
+            <Animated.View 
               style={[
-                styles.segment,
-                {
-                  backgroundColor: i < completedThisWeek 
-                    ? colors.primary 
-                    : colors.surfaceSecondary,
+                styles.progressFill,
+                { 
+                  backgroundColor: colors.primary,
+                  width: `${(completedThisWeek / 7) * 100}%`,
                 },
               ]}
             />
-          ))}
+          </View>
+          <Text style={[styles.progressText, { color: colors.textSecondary }]}>
+            {completedThisWeek}/7 esta semana
+          </Text>
         </View>
-
-        <Text style={[styles.motivationalText, { color: colors.textSecondary }]}>
-          {getMotivationalMessage(completedThisWeek)}
-        </Text>
-      </Animated.View>
+        
+        {/* Mejor racha */}
+        {(streakData?.longestStreak ?? 0) > 0 && (
+          <View style={styles.bestStreakContainer}>
+            <FontAwesome name="trophy" size={12} color={colors.accent} />
+            <Text style={[styles.bestStreakText, { color: colors.textTertiary }]}>
+              Mejor: {streakData?.longestStreak} días
+            </Text>
+          </View>
+        )}
+      </View>
     </Animated.View>
   );
 };
@@ -310,127 +278,98 @@ export const WeeklyStreakCalendar = ({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: BorderRadius.xl,
+    borderRadius: BorderRadius.lg,
     padding: Spacing.l,
     marginBottom: Spacing.xl,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 3,
   },
-
-  // -- Header
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.l,
   },
-  streakInfo: {
+  headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.m,
+    gap: Spacing.s,
   },
-  streakIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  streakEmoji: {
-    fontSize: 20,
-  },
-  streakTextBlock: {
-    gap: 1,
-  },
-  streakCount: {
-    fontSize: Typography.fontSize.h3,
-    fontWeight: Typography.fontWeight.bold,
+  headerTitle: {
+    fontSize: Typography.fontSize.body,
+    fontWeight: Typography.fontWeight.semibold,
     fontFamily: Typography.fontFamily.heading,
   },
-  streakSubtitle: {
-    fontSize: 12,
-    fontWeight: Typography.fontWeight.medium,
-  },
-  bestBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
+  streakBadge: {
     paddingHorizontal: Spacing.m,
     paddingVertical: Spacing.xs,
     borderRadius: BorderRadius.xl,
   },
-  bestBadgeText: {
-    fontSize: 13,
+  streakBadgeText: {
+    fontSize: Typography.fontSize.caption,
     fontWeight: Typography.fontWeight.bold,
   },
-
-  // -- Week tiles
-  weekRow: {
+  weekContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: Spacing.l,
-    gap: 4,
   },
-  dayTileWrapper: {
+  dayContainer: {
     alignItems: 'center',
     flex: 1,
-    gap: 4,
   },
-  dayLabel: {
-    fontSize: 10,
-    fontWeight: Typography.fontWeight.semibold,
-    letterSpacing: 0.3,
+  dayName: {
+    fontSize: 11,
+    fontWeight: Typography.fontWeight.medium,
+    marginBottom: Spacing.xs,
+    textTransform: 'uppercase',
   },
-  dayTile: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
+  dayCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
   },
-  completedContent: {
-    alignItems: 'center',
-    gap: 1,
+  todayCircle: {
+    borderWidth: 2,
   },
-  tileNumber: {
+  dayNumber: {
     fontSize: Typography.fontSize.caption,
     fontWeight: Typography.fontWeight.semibold,
   },
-  todayLabel: {
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderRadius: 4,
+  todayDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    marginTop: 4,
   },
-  todayLabelText: {
-    color: '#FFFFFF',
-    fontSize: 8,
-    fontWeight: Typography.fontWeight.bold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-
-  // -- Footer
   footer: {
     gap: Spacing.s,
   },
-  segmentRow: {
-    flexDirection: 'row',
-    gap: 4,
+  progressContainer: {
+    gap: Spacing.xs,
   },
-  segment: {
-    flex: 1,
-    height: 4,
-    borderRadius: 2,
+  progressBar: {
+    height: 6,
+    borderRadius: 3,
+    overflow: 'hidden',
   },
-  motivationalText: {
+  progressFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  progressText: {
     fontSize: 12,
     fontWeight: Typography.fontWeight.medium,
-    textAlign: 'center',
-    fontStyle: 'italic',
-    marginTop: 2,
+  },
+  bestStreakContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  bestStreakText: {
+    fontSize: 12,
+    fontWeight: Typography.fontWeight.medium,
   },
 });
 

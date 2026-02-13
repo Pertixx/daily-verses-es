@@ -11,7 +11,7 @@ import type {
   UserProfile,
   NotificationSettings,
   StreakData,
-  FavoriteVerse,
+  FavoriteAffirmation,
   Theme,
   OnboardingState,
   UserCustomMix,
@@ -45,7 +45,8 @@ class StorageService {
         console.warn(`⚠️ ${context} - intento ${attempt}/${maxRetries} falló:`, error);
         
         if (attempt < maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, 100 * attempt));
+          // Backoff exponencial: 300ms, 600ms, 900ms (iOS necesita más tiempo para recuperar SQLite)
+          await new Promise(resolve => setTimeout(resolve, 300 * attempt));
         }
       }
     }
@@ -69,6 +70,23 @@ class StorageService {
     } catch (error) {
       console.error('Error al obtener datos del usuario:', error);
       return null;
+    }
+  }
+
+  /**
+   * Obtiene datos del usuario distinguiendo entre "no hay datos" y "error de storage".
+   * Esto es CRÍTICO para no confundir un fallo temporal de AsyncStorage con un usuario nuevo.
+   */
+  async getUserDataSafe(): Promise<{ data: UserData | null; error: boolean }> {
+    try {
+      const data = await this.withRetry(async () => {
+        const raw = await AsyncStorage.getItem(STORAGE_KEYS.USER_DATA);
+        return raw ? JSON.parse(raw) : null;
+      }, 3, 'getUserDataSafe');
+      return { data, error: false };
+    } catch (error) {
+      console.error('❌ Error al obtener datos del usuario (safe):', error);
+      return { data: null, error: true };
     }
   }
 
@@ -196,7 +214,10 @@ class StorageService {
         return false;
       }
       
-      console.log('✅ Onboarding marcado como completado y verificado');
+      // Guardar flag redundante como protección contra pérdida del blob principal
+      await this.setOnboardingCompletedBackup();
+      
+      console.log('✅ Onboarding marcado como completado y verificado (con backup)');
       return true;
     } catch (error) {
       console.error('Error al completar onboarding:', error);
@@ -229,6 +250,32 @@ class StorageService {
       return true;
     } catch (error) {
       console.error('Error al guardar estado del onboarding:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Guarda flag redundante de onboarding completado.
+   * Este flag es una key separada (no dentro del blob JSON de USER_DATA)
+   * para proteger contra pérdida/corrupción del blob principal.
+   */
+  async setOnboardingCompletedBackup(): Promise<void> {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEYS.ONBOARDING_COMPLETED_BACKUP, 'true');
+    } catch (error) {
+      console.warn('⚠️ Error al guardar flag backup de onboarding:', error);
+    }
+  }
+
+  /**
+   * Lee el flag redundante de onboarding completado.
+   * Usado como fallback cuando el blob principal de USER_DATA no se puede leer.
+   */
+  async isOnboardingCompletedBackup(): Promise<boolean> {
+    try {
+      const value = await AsyncStorage.getItem(STORAGE_KEYS.ONBOARDING_COMPLETED_BACKUP);
+      return value === 'true';
+    } catch {
       return false;
     }
   }
@@ -488,9 +535,9 @@ class StorageService {
   // ==========================================================================
 
   /**
-   * Obtiene los versículos favoritos
+   * Obtiene las afirmaciones favoritas
    */
-  async getFavorites(): Promise<FavoriteVerse[]> {
+  async getFavorites(): Promise<FavoriteAffirmation[]> {
     try {
       const userData = await this.getUserData();
       return userData?.favorites ?? [];
@@ -501,9 +548,9 @@ class StorageService {
   }
 
   /**
-   * Agrega un versículo a favoritos
+   * Agrega una afirmación a favoritos
    */
-  async addFavorite(affirmation: Omit<FavoriteVerse, 'favoritedAt'>): Promise<boolean> {
+  async addFavorite(affirmation: Omit<FavoriteAffirmation, 'favoritedAt'>): Promise<boolean> {
     try {
       const favorites = await this.getFavorites();
       
@@ -512,7 +559,7 @@ class StorageService {
         return true; // Ya está en favoritos
       }
 
-      const newFavorite: FavoriteVerse = {
+      const newFavorite: FavoriteAffirmation = {
         ...affirmation,
         favoritedAt: new Date().toISOString(),
       };
@@ -529,7 +576,7 @@ class StorageService {
   }
 
   /**
-   * Remueve un versículo de favoritos
+   * Remueve una afirmación de favoritos
    */
   async removeFavorite(affirmationId: string): Promise<boolean> {
     try {
@@ -692,21 +739,21 @@ class StorageService {
   // ==========================================================================
 
   /**
-   * Obtiene los IDs de versículos que ya fueron reproducidos por audio
+   * Obtiene los IDs de afirmaciones que ya fueron reproducidas por audio
    */
   async getPlayedAudioAffirmations(): Promise<string[]> {
     try {
       const data = await AsyncStorage.getItem(STORAGE_KEYS.AUDIO_PLAYED_AFFIRMATIONS);
       return data ? JSON.parse(data) : [];
     } catch (error) {
-      console.error('Error al obtener versículos reproducidos:', error);
+      console.error('Error al obtener afirmaciones reproducidas:', error);
       return [];
     }
   }
 
   /**
-   * Agrega un ID de versículo a la lista de reproducidos
-   * @returns true si se agregó (era nuevo), false si ya existía
+   * Agrega un ID de afirmación a la lista de reproducidas
+   * @returns true si se agregó (era nueva), false si ya existía
    */
   async addPlayedAudioAffirmation(affirmationId: string): Promise<boolean> {
     try {
@@ -721,13 +768,13 @@ class StorageService {
       );
       return true;
     } catch (error) {
-      console.error('Error al agregar versículo reproducido:', error);
+      console.error('Error al agregar afirmación reproducida:', error);
       return false;
     }
   }
 
   /**
-   * Obtiene la cantidad de versículos distintos reproducidos
+   * Obtiene la cantidad de afirmaciones distintas reproducidas
    */
   async getPlayedAudioCount(): Promise<number> {
     const played = await this.getPlayedAudioAffirmations();
@@ -735,7 +782,7 @@ class StorageService {
   }
 
   /**
-   * Verifica si un versículo ya fue reproducido
+   * Verifica si una afirmación ya fue reproducida
    */
   async hasPlayedAffirmation(affirmationId: string): Promise<boolean> {
     const played = await this.getPlayedAudioAffirmations();

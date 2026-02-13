@@ -3,87 +3,81 @@ import SwiftUI
 
 // MARK: - Colors
 
-let lightBackground = Color(red: 0.961, green: 0.941, blue: 0.910) // #F5F0E8 (parchment)
+let lightBackground = Color(red: 0.96, green: 0.94, blue: 0.91) // #F5F0E8
 let darkBackground = Color(red: 0.1, green: 0.1, blue: 0.1)   // #1A1A1A
 
 // MARK: - Data Models
 
-struct Verse: Codable, Identifiable {
+struct Affirmation: Codable, Identifiable {
     let id: String
     let text: String
 }
 
-// For backward compatibility with stored widget data
-typealias Affirmation = Verse
-
 // MARK: - Data Provider
 
-struct VerseDataProvider {
+struct AffirmationDataProvider {
     static let appGroupID = "group.com.startnode.tito"
     static let affirmationsKey = "widgetAffirmations"
 
-    static func loadVerses() -> [Verse] {
+    static func loadAffirmations() -> [Affirmation] {
         guard let userDefaults = UserDefaults(suiteName: appGroupID),
               let jsonString = userDefaults.string(forKey: affirmationsKey),
               let jsonData = jsonString.data(using: .utf8),
-              let verses = try? JSONDecoder().decode([Verse].self, from: jsonData),
-              !verses.isEmpty else {
-            return getDefaultVerses()
+              let affirmations = try? JSONDecoder().decode([Affirmation].self, from: jsonData),
+              !affirmations.isEmpty else {
+            return getDefaultAffirmations()
         }
-        return verses
+        return affirmations
     }
 
-    static func getDefaultVerses() -> [Verse] {
+    static func getDefaultAffirmations() -> [Affirmation] {
         [
-            Verse(id: "default1", text: "Porque de tal manera amó Dios al mundo — Juan 3:16"),
-            Verse(id: "default2", text: "Todo lo puedo en Cristo que me fortalece — Filipenses 4:13"),
-            Verse(id: "default3", text: "El Señor es mi pastor, nada me faltará — Salmos 23:1"),
+            Affirmation(id: "default1", text: "Todo lo puedo en Cristo que me fortalece — Filipenses 4:13"),
+            Affirmation(id: "default2", text: "El Señor es mi pastor, nada me falta — Salmos 23:1"),
+            Affirmation(id: "default3", text: "Porque yo sé los planes que tengo para ustedes — Jeremías 29:11"),
         ]
     }
 
-    static func getRandomVerse() -> Verse {
-        loadVerses().randomElement() ?? getDefaultVerses()[0]
+    static func getRandomAffirmation() -> Affirmation {
+        loadAffirmations().randomElement() ?? getDefaultAffirmations()[0]
     }
 
     /// Obtiene un versículo corto apropiado para lock screen (max 60 caracteres)
-    static func getShortVerse() -> Verse {
-        let verses = loadVerses()
-        let shortVerses = verses.filter { $0.text.count <= 60 }
-        return shortVerses.randomElement() ?? verses.randomElement() ?? getDefaultVerses()[0]
+    static func getShortAffirmation() -> Affirmation {
+        let affirmations = loadAffirmations()
+        let shortAffirmations = affirmations.filter { $0.text.count <= 60 }
+        return shortAffirmations.randomElement() ?? affirmations.randomElement() ?? getDefaultAffirmations()[0]
     }
 }
 
 // MARK: - Timeline Entry
 
-struct VerseEntry: TimelineEntry {
+struct AffirmationEntry: TimelineEntry {
     let date: Date
-    let verse: Verse
+    let affirmation: Affirmation
 }
-
-// Backward compat alias
-typealias AffirmationEntry = VerseEntry
 
 // MARK: - Timeline Providers
 
-/// Timeline provider para widgets de Home Screen
+/// Timeline provider para widgets de Home Screen (versículos)
 struct HomeScreenTimelineProvider: TimelineProvider {
-    func placeholder(in context: Context) -> VerseEntry {
-        VerseEntry(date: Date(), verse: VerseDataProvider.getRandomVerse())
+    func placeholder(in context: Context) -> AffirmationEntry {
+        AffirmationEntry(date: Date(), affirmation: AffirmationDataProvider.getRandomAffirmation())
     }
 
-    func getSnapshot(in context: Context, completion: @escaping (VerseEntry) -> Void) {
-        completion(VerseEntry(date: Date(), verse: VerseDataProvider.getRandomVerse()))
+    func getSnapshot(in context: Context, completion: @escaping (AffirmationEntry) -> Void) {
+        completion(AffirmationEntry(date: Date(), affirmation: AffirmationDataProvider.getRandomAffirmation()))
     }
 
-    func getTimeline(in context: Context, completion: @escaping (Timeline<VerseEntry>) -> Void) {
+    func getTimeline(in context: Context, completion: @escaping (Timeline<AffirmationEntry>) -> Void) {
         let currentDate = Date()
-        let verses = VerseDataProvider.loadVerses()
+        let affirmations = AffirmationDataProvider.loadAffirmations()
 
-        var entries: [VerseEntry] = []
+        var entries: [AffirmationEntry] = []
         for hourOffset in stride(from: 0, to: 24, by: 4) {
             if let entryDate = Calendar.current.date(byAdding: .hour, value: hourOffset, to: currentDate) {
-                let verse = verses.randomElement() ?? VerseDataProvider.getDefaultVerses()[0]
-                entries.append(VerseEntry(date: entryDate, verse: verse))
+                let affirmation = affirmations.randomElement() ?? AffirmationDataProvider.getDefaultAffirmations()[0]
+                entries.append(AffirmationEntry(date: entryDate, affirmation: affirmation))
             }
         }
 
@@ -92,30 +86,30 @@ struct HomeScreenTimelineProvider: TimelineProvider {
     }
 }
 
-/// Timeline provider para widgets de Lock Screen
+/// Timeline provider para widgets de Lock Screen (versículos)
 @available(iOS 16.0, *)
 struct LockScreenTimelineProvider: TimelineProvider {
-    func placeholder(in context: Context) -> VerseEntry {
-        VerseEntry(date: Date(), verse: VerseDataProvider.getShortVerse())
+    func placeholder(in context: Context) -> AffirmationEntry {
+        AffirmationEntry(date: Date(), affirmation: AffirmationDataProvider.getShortAffirmation())
     }
 
-    func getSnapshot(in context: Context, completion: @escaping (VerseEntry) -> Void) {
-        completion(VerseEntry(date: Date(), verse: VerseDataProvider.getShortVerse()))
+    func getSnapshot(in context: Context, completion: @escaping (AffirmationEntry) -> Void) {
+        completion(AffirmationEntry(date: Date(), affirmation: AffirmationDataProvider.getShortAffirmation()))
     }
 
-    func getTimeline(in context: Context, completion: @escaping (Timeline<VerseEntry>) -> Void) {
+    func getTimeline(in context: Context, completion: @escaping (Timeline<AffirmationEntry>) -> Void) {
         let currentDate = Date()
-        let verses = VerseDataProvider.loadVerses()
+        let affirmations = AffirmationDataProvider.loadAffirmations()
 
         // Filtrar solo versículos cortos para lock screen
-        let shortVerses = verses.filter { $0.text.count <= 60 }
-        let availableVerses = shortVerses.isEmpty ? verses : shortVerses
+        let shortAffirmations = affirmations.filter { $0.text.count <= 60 }
+        let availableAffirmations = shortAffirmations.isEmpty ? affirmations : shortAffirmations
 
-        var entries: [VerseEntry] = []
+        var entries: [AffirmationEntry] = []
         for hourOffset in stride(from: 0, to: 24, by: 4) {
             if let entryDate = Calendar.current.date(byAdding: .hour, value: hourOffset, to: currentDate) {
-                let verse = availableVerses.randomElement() ?? VerseDataProvider.getDefaultVerses()[0]
-                entries.append(VerseEntry(date: entryDate, verse: verse))
+                let affirmation = availableAffirmations.randomElement() ?? AffirmationDataProvider.getDefaultAffirmations()[0]
+                entries.append(AffirmationEntry(date: entryDate, affirmation: affirmation))
             }
         }
 
@@ -127,12 +121,12 @@ struct LockScreenTimelineProvider: TimelineProvider {
 // MARK: - Small Widget View
 
 struct SmallWidgetView: View {
-    let entry: VerseEntry
+    let entry: AffirmationEntry
     @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
-        Text(entry.verse.text)
-            .font(.custom("Nunito_600SemiBold", size: 13))
+        Text(entry.affirmation.text)
+            .font(.custom("DMSans_600SemiBold", size: 13))
             .foregroundStyle(colorScheme == .dark ? Color.white : Color.black)
             .multilineTextAlignment(.center)
             .lineLimit(6)
@@ -148,14 +142,14 @@ struct SmallWidgetView: View {
 // MARK: - Medium Widget View
 
 struct MediumWidgetView: View {
-    let entry: VerseEntry
+    let entry: AffirmationEntry
     @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
         ZStack {
             // Texto centrado
-            Text(entry.verse.text)
-                .font(.custom("Nunito_600SemiBold", size: 17))
+            Text(entry.affirmation.text)
+                .font(.custom("DMSans_600SemiBold", size: 17))
                 .foregroundStyle(colorScheme == .dark ? Color.white : Color.black)
                 .multilineTextAlignment(.center)
                 .minimumScaleFactor(0.6)
@@ -163,12 +157,14 @@ struct MediumWidgetView: View {
                 .padding(.horizontal, 16)
                 .padding(.bottom, 40)
 
-            // Icono de cruz abajo a la izquierda
+            // Imagen abajo a la izquierda
             VStack {
                 Spacer()
                 HStack {
-                    Text("✝️")
-                        .font(.system(size: 28))
+                    Image("Tito")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 50, height: 50)
                     Spacer()
                 }
                 .padding(.horizontal, 12)
@@ -184,14 +180,14 @@ struct MediumWidgetView: View {
 // MARK: - Large Widget View
 
 struct LargeWidgetView: View {
-    let entry: VerseEntry
+    let entry: AffirmationEntry
     @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
         ZStack {
             // Texto centrado
-            Text(entry.verse.text)
-                .font(.custom("Nunito_600SemiBold", size: 24))
+            Text(entry.affirmation.text)
+                .font(.custom("DMSans_600SemiBold", size: 24))
                 .foregroundStyle(colorScheme == .dark ? Color.white : Color.black)
                 .multilineTextAlignment(.center)
                 .minimumScaleFactor(0.6)
@@ -199,12 +195,14 @@ struct LargeWidgetView: View {
                 .padding(.horizontal, 24)
                 .padding(.bottom, 60)
 
-            // Icono de cruz abajo a la izquierda
+            // Imagen abajo a la izquierda
             VStack {
                 Spacer()
                 HStack {
-                    Text("✝️")
-                        .font(.system(size: 36))
+                    Image("Tito")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 64, height: 64)
                     Spacer()
                 }
                 .padding(.horizontal, 16)
@@ -219,30 +217,30 @@ struct LargeWidgetView: View {
 
 // MARK: - Lock Screen Widget Views
 
-/// Widget rectangular para lock screen (2-3 lineas de texto)
+/// Widget rectangular para lock screen (2-3 líneas de texto)
 struct LockScreenRectangularView: View {
-    let entry: VerseEntry
+    let entry: AffirmationEntry
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text("Versículo")
+            Text("Tito")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
-            Text(entry.verse.text)
-                .font(.custom("Nunito_600SemiBold", size: 13))
+            Text(entry.affirmation.text)
+                .font(.custom("DMSans_600SemiBold", size: 13))
                 .lineLimit(2)
                 .minimumScaleFactor(0.8)
         }
     }
 }
 
-/// Widget inline para lock screen (1 linea de texto)
+/// Widget inline para lock screen (1 línea de texto)
 struct LockScreenInlineView: View {
-    let entry: VerseEntry
+    let entry: AffirmationEntry
 
     var body: some View {
-        Text(entry.verse.text)
-            .font(.custom("Nunito_600SemiBold", size: 13))
+        Text(entry.affirmation.text)
+            .font(.custom("DMSans_600SemiBold", size: 13))
             .lineLimit(1)
             .minimumScaleFactor(0.7)
     }
@@ -250,7 +248,7 @@ struct LockScreenInlineView: View {
 
 /// Widget circular para lock screen
 struct LockScreenCircularView: View {
-    let entry: VerseEntry
+    let entry: AffirmationEntry
 
     var body: some View {
         ZStack {
@@ -258,7 +256,7 @@ struct LockScreenCircularView: View {
             VStack(spacing: 2) {
                 Image(systemName: "cross.fill")
                     .font(.system(size: 20))
-                Text("✝️")
+                Text("Tito")
                     .font(.caption2)
             }
             .foregroundStyle(.white)
@@ -268,35 +266,33 @@ struct LockScreenCircularView: View {
 
 // MARK: - Widget Configuration
 
-/// Widget para Home Screen (Small, Medium, Large)
-struct MimoAffirmationWidget: Widget {
-    // Keep kind string for backward compat with existing widget installations
-    let kind: String = "MimoAffirmationWidget"
+/// Widget de versículos para Home Screen (Small, Medium, Large)
+struct TitoVerseWidget: Widget {
+    let kind: String = "TitoVerseWidget"
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: HomeScreenTimelineProvider()) { entry in
             HomeScreenWidgetEntryView(entry: entry)
-                .widgetURL(URL(string: "versiculo://?verseId=\(entry.verse.id)"))
+                .widgetURL(URL(string: "tito://?id=\(entry.affirmation.id)"))
         }
         .configurationDisplayName("Versículos")
-        .description("Recibí versículos bíblicos durante el día")
+        .description("Recibe versículos bíblicos durante el día")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }
 
-/// Widget para Lock Screen (Rectangular, Inline, Circular)
+/// Widget de versículos para Lock Screen (Rectangular, Inline, Circular)
 @available(iOS 16.0, *)
-struct MimoLockScreenWidget: Widget {
-    // Keep kind string for backward compat with existing widget installations
-    let kind: String = "MimoLockScreenWidget"
+struct TitoLockScreenWidget: Widget {
+    let kind: String = "TitoLockScreenWidget"
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: LockScreenTimelineProvider()) { entry in
             LockScreenWidgetEntryView(entry: entry)
-                .widgetURL(URL(string: "versiculo://?verseId=\(entry.verse.id)"))
+                .widgetURL(URL(string: "tito://?id=\(entry.affirmation.id)"))
         }
         .configurationDisplayName("Versículos")
-        .description("Versículos para tu pantalla de bloqueo")
+        .description("Versículos bíblicos para tu pantalla de bloqueo")
         #if os(iOS)
         .supportedFamilies([.accessoryRectangular, .accessoryInline, .accessoryCircular])
         #else
@@ -310,7 +306,7 @@ struct MimoLockScreenWidget: Widget {
 /// Entry view para Home Screen widgets
 struct HomeScreenWidgetEntryView: View {
     @Environment(\.widgetFamily) var family
-    let entry: VerseEntry
+    let entry: AffirmationEntry
 
     @ViewBuilder
     var body: some View {
@@ -330,7 +326,7 @@ struct HomeScreenWidgetEntryView: View {
 /// Entry view para Lock Screen widgets
 struct LockScreenWidgetEntryView: View {
     @Environment(\.widgetFamily) var family
-    let entry: VerseEntry
+    let entry: AffirmationEntry
 
     @ViewBuilder
     var body: some View {
@@ -351,43 +347,43 @@ struct LockScreenWidgetEntryView: View {
 
 // Home Screen Widgets
 #Preview("Small", as: .systemSmall) {
-    MimoAffirmationWidget()
+    TitoVerseWidget()
 } timeline: {
-    VerseEntry(date: .now, verse: Verse(id: "1", text: "El Señor es mi pastor — Sal 23:1"))
+    AffirmationEntry(date: .now, affirmation: Affirmation(id: "1", text: "Todo lo puedo en Cristo que me fortalece — Filipenses 4:13"))
 }
 
 #Preview("Medium", as: .systemMedium) {
-    MimoAffirmationWidget()
+    TitoVerseWidget()
 } timeline: {
-    VerseEntry(date: .now, verse: Verse(id: "2", text: "Todo lo puedo en Cristo — Fil 4:13"))
+    AffirmationEntry(date: .now, affirmation: Affirmation(id: "2", text: "El Señor es mi pastor, nada me falta — Salmos 23:1"))
 }
 
 #Preview("Large", as: .systemLarge) {
-    MimoAffirmationWidget()
+    TitoVerseWidget()
 } timeline: {
-    VerseEntry(date: .now, verse: Verse(id: "3", text: "Porque yo sé los planes que tengo para ustedes — Jer 29:11"))
+    AffirmationEntry(date: .now, affirmation: Affirmation(id: "3", text: "Porque yo sé los planes que tengo para ustedes — Jeremías 29:11"))
 }
 
 // Lock Screen Widgets
 #if os(iOS)
 @available(iOS 16.0, *)
 #Preview("Lock Rectangular", as: .accessoryRectangular) {
-    MimoLockScreenWidget()
+    TitoLockScreenWidget()
 } timeline: {
-    VerseEntry(date: .now, verse: Verse(id: "4", text: "Dios es nuestro refugio — Sal 46:1"))
+    AffirmationEntry(date: .now, affirmation: Affirmation(id: "4", text: "El Señor es mi luz — Salmos 27:1"))
 }
 
 @available(iOS 16.0, *)
 #Preview("Lock Inline", as: .accessoryInline) {
-    MimoLockScreenWidget()
+    TitoLockScreenWidget()
 } timeline: {
-    VerseEntry(date: .now, verse: Verse(id: "5", text: "Confía en el Señor — Prov 3:5"))
+    AffirmationEntry(date: .now, affirmation: Affirmation(id: "5", text: "Dios es amor — 1 Juan 4:8"))
 }
 
 @available(iOS 16.0, *)
 #Preview("Lock Circular", as: .accessoryCircular) {
-    MimoLockScreenWidget()
+    TitoLockScreenWidget()
 } timeline: {
-    VerseEntry(date: .now, verse: Verse(id: "6", text: "Fe"))
+    AffirmationEntry(date: .now, affirmation: Affirmation(id: "6", text: "Fe"))
 }
 #endif

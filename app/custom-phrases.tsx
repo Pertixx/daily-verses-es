@@ -229,7 +229,7 @@ export default function CustomPhrasesScreen() {
               Crea tu primera frase
             </Text>
             <Text style={[styles.emptyDescription, { color: colors.textSecondary }]}>
-              Escribí versículos personalizados que te inspiren cada día
+              Escribe afirmaciones personalizadas que te inspiren cada día
             </Text>
           </Animated.View>
         )}
@@ -272,7 +272,7 @@ export default function CustomPhrasesScreen() {
         <View style={[styles.inputWrapper, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
           <TextInput
             style={[styles.input, { color: colors.text }]}
-            placeholder="Escribí tu versículo..."
+            placeholder="Escribe tu afirmación..."
             placeholderTextColor={colors.textTertiary}
             value={newPhrase}
             onChangeText={setNewPhrase}

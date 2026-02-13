@@ -1,14 +1,14 @@
 /** @type {import('@bacons/apple-targets').Config} */
 module.exports = (config) => ({
   type: "widget",
-  name: "MimoWidget", // Keep internal name for backward compat with iOS target
-  displayName: "Versículo",
+  name: "TitoWidget",
+  displayName: "Tito",
   deploymentTarget: "17.0",
 
   // Colores para el widget
   colors: {
-    // Color de acento del widget (azul sereno)
-    $accent: "#5B7FCC",
+    // Color de acento del widget
+    $accent: "#8B6F4E",
     // Color de fondo del widget
     $widgetBackground: {
       light: "#FFFFFF",
@@ -25,7 +25,7 @@ module.exports = (config) => ({
       light: "#6B7280",
       dark: "#9CA3AF",
     },
-    AccentColor: "#5B7FCC",
+    AccentColor: "#8B6F4E",
   },
 
   // Entitlements - usar el mismo App Group que la app principal

@@ -1,4 +1,4 @@
-# Plan de Migración: Mimo (Afirmaciones) → Versículo (Versículos Diarios)
+# Plan de Migración: Mimo (Afirmaciones) → Tito (Versículos Diarios)
 
 ## Resumen Ejecutivo
 
@@ -21,7 +21,7 @@ Migrar la app **Mimo** (afirmaciones diarias) a **Versículo** (versículos bíb
 - **Slug:** versiculo
 - **Bundle ID:** com.startnode.versiculo (o mantener mimo si se prefiere evitar nuevo registro)
 - **Tono:** Espiritual, devocional, sereno, esperanzador
-- **Mascota:** Eliminar — reemplazar con iconografía religiosa sutil (paloma, cruz, libro abierto, etc.)
+- **Mascota:** Tito (personaje ilustrado con variantes: greetings, sleeps, peeking)
 
 ### Archivos a Modificar
 | Archivo | Cambio |
@@ -41,7 +41,7 @@ Migrar la app **Mimo** (afirmaciones diarias) a **Versículo** (versículos bíb
 - **Accent:** `#FF8A3D` (naranja hover)
 - **Vibe:** Energético, cálido, juvenil
 
-### Estado Objetivo (Versículo)
+### Estado Objetivo (Tito)
 Propuesta de paleta espiritual/devocional:
 
 - **Primario:** `#5B7FCC` (azul sereno — confianza, fe, cielo)
@@ -110,9 +110,7 @@ Propuesta de paleta espiritual/devocional:
 - **Vibe:** Redondeada, amigable, infantil
 
 ### Estado Objetivo
-- **Fuente principal:** Mantener Nunito por ahora (es legible y funcional)
-- **Alternativa futura:** Considerar Lora (serif, más bíblica) para títulos de versículos o Merriweather
-- **Acción inmediata:** Ningún cambio de fuente, solo ajustar textos/copies
+- **Fuente principal:** DM Sans
 
 ---
 
@@ -126,28 +124,35 @@ Propuesta de paleta espiritual/devocional:
 
 ### Estado Objetivo
 - Nuevas categorías bíblicas:
-  - **Fe y Confianza** (Salmos, Proverbios)
-  - **Fortaleza** (Isaías, Josué)
-  - **Amor** (1 Corintios, Juan)
-  - **Esperanza** (Romanos, Jeremías)
-  - **Paz** (Filipenses, Juan)
-  - **Gratitud** (Salmos, 1 Tesalonicenses)
-  - **Sabiduría** (Proverbios, Santiago)
-  - **Protección** (Salmos, Deuteronomio)
-  - **Sanación** (Salmos, Jeremías)
-  - **Provisión** (Mateo, Filipenses)
-  - **Perdón** (Efesios, Colosenses)
-  - **Alabanza** (Salmos, Apocalipsis)
+  Se obtienen a partir del endpoint para obtener las categorias que usamos para hacer sync con el backend
+  Luego yo voy a dejar subidos los json de fallback, por el momento solo tengo el de amor.json
+
+- Este es listado de categorias con su id en nuestro backend:
+  . Esperanza - id ozk69vyke0
+  . Paz - id p0m08pzkzr
+  . Ansiedad - id q61oxpg10p
+  . Fortaleza - id 9jmg43bmqv
+  . Animo - id 70mleojko8
+  . Gratitud - id 28m22n5mzr
+  . Amor - id 4j1qlnqkxd
+  . Perdon - id obmrpz31ex
+  . Familia - id 02kpld71dx
+  . Confianza en Dios - id ydmdb5v1j4
+  . Miedo - id 4j1qlnzkxd
+  . Tristeza - id obmrpzz1ex
+  . Sabiduria - id 02kpldz1dx
+  . Proposito - id ydmdb581j4
+  . Maniana - id jyknzd0k92
+  . Noche - id jqmz03012y
+  . Antes de Dormir - id drmj7g5m2b
+  . Fe y Esperanza - id b3mx04lmny
 
 ### Estructura del Versículo
 ```typescript
 interface Verse {
   id: string;
-  text: string;           // "Porque de tal manera amó Dios al mundo..."
-  reference: string;      // "Juan 3:16"
-  book: string;           // "Juan"
-  chapter: number;        // 3
-  verseNumber: number;    // 16
+  title: string;          // Verse
+  text: string;           // Verse explanation
   audioSource?: string;
   audioDuration?: number;
 }
@@ -179,7 +184,7 @@ free_trial → free_trial_reminder → trial_paywall → widget
 
 ### Estado Objetivo: ~7 pantallas
 ```
-welcome → name → theme → appIcon → notifications → widget → complete
+welcome → name → theme → appIcon → vibe → affirmation_preview → notifications → daily_affirmations → free_trial → free_trial_reminder → trial_paywall → widget
 ```
 
 ### Pantallas a MANTENER (con ajuste de textos/estética)

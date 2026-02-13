@@ -6,27 +6,27 @@ import * as Linking from 'expo-linking';
 import * as Notifications from 'expo-notifications';
 import { analytics } from './analytics.service';
 
-type DeepLinkHandler = (verseId: string) => void;
+type DeepLinkHandler = (affirmationId: string) => void;
 
 /**
  * Servicio para manejar deep links desde widget y notificaciones
  */
 class DeepLinkService {
-  private pendingVerseId: string | null = null;
+  private pendingAffirmationId: string | null = null;
   private handler: DeepLinkHandler | null = null;
   private notificationSubscription: Notifications.EventSubscription | null = null;
   private linkingSubscription: { remove: () => void } | null = null;
 
   /**
-   * Registra un handler para cuando se recibe un deep link con verseId
+   * Registra un handler para cuando se recibe un deep link con affirmationId
    */
   registerHandler(handler: DeepLinkHandler): void {
     this.handler = handler;
     
     // Si hay un ID pendiente, procesarlo inmediatamente
-    if (this.pendingVerseId) {
-      handler(this.pendingVerseId);
-      this.pendingVerseId = null;
+    if (this.pendingAffirmationId) {
+      handler(this.pendingAffirmationId);
+      this.pendingAffirmationId = null;
     }
   }
 
@@ -57,16 +57,16 @@ class DeepLinkService {
     this.notificationSubscription = Notifications.addNotificationResponseReceivedListener(
       (response) => {
         const data = response.notification.request.content.data;
-        const notificationType = (data?.type as string) || 'verse';
+        const notificationType = (data?.type as string) || 'affirmation';
         
         // Trackear que el usuario abrió la app desde una notificación
         analytics.track('notification_opened', { 
           notification_type: notificationType,
-          verse_id: (data?.verseId || data?.affirmationId) as string | undefined
+          affirmation_id: data?.affirmationId as string | undefined
         });
         
-        if (data?.verseId || data?.affirmationId) {
-          this.processVerseId((data?.verseId || data?.affirmationId) as string);
+        if (data?.affirmationId) {
+          this.processAffirmationId(data.affirmationId as string);
         }
       }
     );
@@ -75,17 +75,17 @@ class DeepLinkService {
     Notifications.getLastNotificationResponseAsync().then((response) => {
       if (response) {
         const data = response.notification.request.content.data;
-        const notificationType = (data?.type as string) || 'verse';
+        const notificationType = (data?.type as string) || 'affirmation';
         
         // Trackear que el usuario abrió la app desde una notificación
         analytics.track('notification_opened', { 
           notification_type: notificationType,
-          verse_id: (data?.verseId || data?.affirmationId) as string | undefined,
+          affirmation_id: data?.affirmationId as string | undefined,
           is_cold_start: true
         });
         
-        if (data?.verseId || data?.affirmationId) {
-          this.processVerseId((data?.verseId || data?.affirmationId) as string);
+        if (data?.affirmationId) {
+          this.processAffirmationId(data.affirmationId as string);
         }
       }
     });
@@ -108,11 +108,9 @@ class DeepLinkService {
   /**
    * Procesa una URL de deep link
    * Formatos soportados:
-   *   - versiculo://?id={id} (formato widget - recomendado)
-   *   - versiculo://?verseId={id} (formato nuevo)
-   *   - mimo://?id={id} (formato legacy widget)
-   *   - mimo://?affirmationId={id} (formato legacy alternativo)
-   *   - mimo://affirmation/{id} (formato legacy)
+   *   - tito://?id={id} (formato widget - recomendado)
+   *   - tito://?affirmationId={id} (formato alternativo)
+   *   - tito://affirmation/{id} (formato legacy)
    */
   private handleUrl(url: string): void {
     try {
@@ -121,42 +119,32 @@ class DeepLinkService {
       console.log('📱 Deep link recibido:', url);
       console.log('📱 Parsed queryParams:', JSON.stringify(parsed.queryParams));
 
-      // Formato widget: versiculo://?id={id} o mimo://?id={id}
+      // Formato widget: tito://?id={id}
       if (parsed.queryParams?.id) {
-        const verseId = parsed.queryParams.id as string;
-        if (verseId) {
-          console.log('📱 Deep link: id encontrado:', verseId);
-          this.processVerseId(verseId);
+        const affirmationId = parsed.queryParams.id as string;
+        if (affirmationId) {
+          console.log('📱 Deep link: id encontrado:', affirmationId);
+          this.processAffirmationId(affirmationId);
           return;
         }
       }
 
-      // Formato nuevo: versiculo://?verseId={id}
-      if (parsed.queryParams?.verseId) {
-        const verseId = parsed.queryParams.verseId as string;
-        if (verseId) {
-          console.log('📱 Deep link: verseId encontrado:', verseId);
-          this.processVerseId(verseId);
-          return;
-        }
-      }
-
-      // Formato legacy: mimo://?affirmationId={id}
+      // Formato alternativo: tito://?affirmationId={id}
       if (parsed.queryParams?.affirmationId) {
-        const verseId = parsed.queryParams.affirmationId as string;
-        if (verseId) {
-          console.log('📱 Deep link: affirmationId (legacy) encontrado:', verseId);
-          this.processVerseId(verseId);
+        const affirmationId = parsed.queryParams.affirmationId as string;
+        if (affirmationId) {
+          console.log('📱 Deep link: affirmationId encontrado:', affirmationId);
+          this.processAffirmationId(affirmationId);
           return;
         }
       }
 
-      // Formato legacy: mimo://affirmation/{id}
+      // Formato legacy: tito://affirmation/{id}
       if (parsed.hostname === 'affirmation' && parsed.path) {
-        const verseId = parsed.path.replace(/^\//, '');
-        if (verseId) {
-          console.log('📱 Deep link: id encontrado en path (legacy):', verseId);
-          this.processVerseId(verseId);
+        const affirmationId = parsed.path.replace(/^\//, '');
+        if (affirmationId) {
+          console.log('📱 Deep link: id encontrado en path:', affirmationId);
+          this.processAffirmationId(affirmationId);
           return;
         }
       }
@@ -169,31 +157,31 @@ class DeepLinkService {
   }
 
   /**
-   * Procesa el ID de versículo recibido
+   * Procesa el ID de afirmación recibido
    */
-  private processVerseId(verseId: string): void {
-    console.log('📱 Deep link recibido con verseId:', verseId);
+  private processAffirmationId(affirmationId: string): void {
+    console.log('📱 Deep link recibido con affirmationId:', affirmationId);
     
     if (this.handler) {
-      this.handler(verseId);
+      this.handler(affirmationId);
     } else {
       // Guardar para procesarlo cuando se registre el handler
-      this.pendingVerseId = verseId;
+      this.pendingAffirmationId = affirmationId;
     }
   }
 
   /**
-   * Obtiene el ID de versículo pendiente (si existe)
+   * Obtiene el ID de afirmación pendiente (si existe)
    */
-  getPendingVerseId(): string | null {
-    return this.pendingVerseId;
+  getPendingAffirmationId(): string | null {
+    return this.pendingAffirmationId;
   }
 
   /**
    * Limpia el ID pendiente
    */
-  clearPendingVerseId(): void {
-    this.pendingVerseId = null;
+  clearPendingAffirmationId(): void {
+    this.pendingAffirmationId = null;
   }
 }
 

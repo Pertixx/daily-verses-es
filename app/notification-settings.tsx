@@ -61,7 +61,7 @@ export default function NotificationSettingsScreen() {
     const newSettings = { ...settings, enabled };
     setSettings(newSettings);
     await storageService.setNotificationSettings(newSettings);
-    await notificationService.scheduleVerseNotifications(newSettings);
+    await notificationService.scheduleAffirmationNotifications(newSettings);
     
     // Trackear cambio de estado de notificaciones
     analytics.track(enabled ? 'notification_enabled' : 'notification_disabled', {
@@ -86,7 +86,7 @@ export default function NotificationSettingsScreen() {
     const newSettings = { ...settings, frequency };
     setSettings(newSettings);
     await storageService.setNotificationSettings(newSettings);
-    await notificationService.scheduleVerseNotifications(newSettings);
+    await notificationService.scheduleAffirmationNotifications(newSettings);
   };
 
   const handleStartHourChange = async (hour: number) => {
@@ -95,7 +95,7 @@ export default function NotificationSettingsScreen() {
     const newSettings = { ...settings, startTime: formatHour(hour) };
     setSettings(newSettings);
     await storageService.setNotificationSettings(newSettings);
-    await notificationService.scheduleVerseNotifications(newSettings);
+    await notificationService.scheduleAffirmationNotifications(newSettings);
   };
 
   const handleEndHourChange = async (hour: number) => {
@@ -104,7 +104,7 @@ export default function NotificationSettingsScreen() {
     const newSettings = { ...settings, endTime: formatHour(hour) };
     setSettings(newSettings);
     await storageService.setNotificationSettings(newSettings);
-    await notificationService.scheduleVerseNotifications(newSettings);
+    await notificationService.scheduleAffirmationNotifications(newSettings);
   };
 
   // Parsear horas del settings
@@ -225,7 +225,7 @@ export default function NotificationSettingsScreen() {
                     Recordatorio de racha
                   </Text>
                   <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
-                    Avisarte si no leíste tu versículo diario
+                    Avisarte si no completaste tu versículo
                   </Text>
                 </View>
               </View>

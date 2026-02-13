@@ -9,6 +9,7 @@ import {
   StyleSheet,
   ScrollView,
   Pressable,
+  Image,
   Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -118,8 +119,12 @@ export default function ProfileScreen() {
           <Text style={[styles.headerTitle, { color: colors.text }]}>
             Perfil
           </Text>
-          <View style={[styles.avatarContainer, { backgroundColor: colors.surfaceSecondary }]}>
-            <Text style={styles.avatarEmoji}>✞️</Text>
+          <View style={styles.avatarContainer}>
+            <Image
+              source={require('@/assets/icons/tito.png')}
+              style={styles.avatarImage}
+              resizeMode="contain"
+            />
           </View>
         </Animated.View>
 
@@ -165,6 +170,7 @@ export default function ProfileScreen() {
             </View>
             <FontAwesome name="chevron-right" size={14} color={colors.textTertiary} />
           </Pressable>
+
         </Animated.View>
 
         {/* Opciones */}
@@ -309,16 +315,15 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xl,
   },
   avatarContainer: {
-    width: 100,
-    height: 100,
+    width: 150,
+    height: 150,
     borderRadius: 50,
     overflow: 'hidden',
     marginBottom: Spacing.m,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
-  avatarEmoji: {
-    fontSize: 48,
+  avatarImage: {
+    width: '100%',
+    height: '100%',
   },
   userName: {
     fontSize: Typography.fontSize.h2,

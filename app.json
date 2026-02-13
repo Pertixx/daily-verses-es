@@ -4,7 +4,7 @@
     "slug": "tito",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icons/Mimo.png",
+    "icon": "./assets/icons/tito.png",
     "scheme": "tito",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -20,7 +20,7 @@
         "ITSAppUsesNonExemptEncryption": false
       },
       "bundleIdentifier": "com.startnode.tito",
-      "icon": "./assets/icons/mimo-icon.icon",
+      "icon": "./assets/icons/tito-icon.icon",
       "appleTeamId": "6Q4ZHTCT23",
       "entitlements": {
         "com.apple.security.application-groups": [
@@ -30,7 +30,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#F5F0E8",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -48,12 +48,12 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/icons/Tito.png",
+          "image": "./assets/icons/tito.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#FAF8F5",
+          "backgroundColor": "#F5F0E8",
           "dark": {
-            "backgroundColor": "#1A1915"
+            "backgroundColor": "#1A1612"
           }
         }
       ],
@@ -62,79 +62,137 @@
       [
         "expo-media-library",
         {
-          "photosPermission": "Manna necesita acceso a tu galería para guardar las imágenes de tus versículos cuando los compartas.",
-          "savePhotosPermission": "Manna necesita permiso para guardar las imágenes de tus versículos en tu galería.",
+          "photosPermission": "Tito necesita acceso a tu galería para guardar las imágenes de tus versiculos cuando las compartas.",
+          "savePhotosPermission": "Tito necesita permiso para guardar las imágenes de tus versiculos en tu galería.",
           "isAccessMediaLocationEnabled": false
         }
       ],
       "@bacons/apple-targets",
       [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "TitoSmallWidget",
+              "label": "Versículo Pequeño",
+              "description": "Versículo diario en widget pequeño",
+              "minWidth": "40dp",
+              "minHeight": "40dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 14400000,
+              "previewImage": "./assets/widget-preview/small.png"
+            },
+            {
+              "name": "TitoMediumWidget",
+              "label": "Versículo Mediano",
+              "description": "Versículo diario en widget mediano",
+              "minWidth": "180dp",
+              "minHeight": "40dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 14400000,
+              "previewImage": "./assets/widget-preview/medium.png"
+            },
+            {
+              "name": "TitoLargeWidget",
+              "label": "Versículo Grande",
+              "description": "Versículo diario en widget grande",
+              "minWidth": "180dp",
+              "minHeight": "180dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 4,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 14400000,
+              "previewImage": "./assets/widget-preview/large.png"
+            }
+          ],
+          "fonts": [
+            "./targets/widget/DMSans_600SemiBold.ttf"
+          ]
+        }
+      ],
+      [
         "expo-notifications",
         {
-          "icon": "./assets/icons/MimoIcon.png"
+          "icon": "./assets/icons/tito.png"
         }
       ],
       [
         "expo-alternate-app-icons",
         [
           {
-            "name": "MimoVariant1",
+            "name": "TitoVariant1",
             "ios": {
-              "light": "./assets/icons/MimoIconVariant1Flat.png",
-              "dark": "./assets/icons/MimoIconVariant1Flat.png",
-              "tinted": "./assets/icons/MimoIconVariant1Flat.png"
+              "light": "./assets/icons/titoIconFlat.png",
+              "dark": "./assets/icons/titoIconFlat.png",
+              "tinted": "./assets/icons/titoIconFlat.png"
             },
             "android": {
-              "foregroundImage": "./assets/icons/MimoIconVariant1Flat.png",
-              "backgroundColor": "#FF9A56"
+              "foregroundImage": "./assets/icons/titoIconFlat.png",
+              "backgroundColor": "#F5F0E8"
             }
           },
           {
-            "name": "MimoVariant2",
+            "name": "TitoVariant2",
             "ios": {
-              "light": "./assets/icons/MimoIconVariant2Flat.png",
-              "dark": "./assets/icons/MimoIconVariant2Flat.png",
-              "tinted": "./assets/icons/MimoIconVariant2Flat.png"
+              "light": "./assets/icons/titoIconFlat2.png",
+              "dark": "./assets/icons/titoIconFlat2.png",
+              "tinted": "./assets/icons/titoIconFlat2.png"
             },
             "android": {
-              "foregroundImage": "./assets/icons/MimoIconVariant2Flat.png",
-              "backgroundColor": "#FFF5EB"
+              "foregroundImage": "./assets/icons/titoIconFlat2.png",
+              "backgroundColor": "#D4B896"
             }
           },
           {
-            "name": "MimoVariant3",
+            "name": "TitoVariant3",
             "ios": {
-              "light": "./assets/icons/MimoIconVariant3Flat.png",
-              "dark": "./assets/icons/MimoIconVariant3Flat.png",
-              "tinted": "./assets/icons/MimoIconVariant3Flat.png"
+              "light": "./assets/icons/titoPeekingIconFlat.png",
+              "dark": "./assets/icons/titoPeekingIconFlat.png",
+              "tinted": "./assets/icons/titoPeekingIconFlat.png"
             },
             "android": {
-              "foregroundImage": "./assets/icons/MimoIconVariant3Flat.png",
-              "backgroundColor": "#FF9A56"
+              "foregroundImage": "./assets/icons/titoPeekingIconFlat.png",
+              "backgroundColor": "#D4B896"
             }
           },
           {
-            "name": "MimoVariant4",
+            "name": "TitoVariant4",
             "ios": {
-              "light": "./assets/icons/MimoIconVariant4Flat.png",
-              "dark": "./assets/icons/MimoIconVariant4Flat.png",
-              "tinted": "./assets/icons/MimoIconVariant4Flat.png"
+              "light": "./assets/icons/titoSleepingIconFlat.png",
+              "dark": "./assets/icons/titoSleepingIconFlat.png",
+              "tinted": "./assets/icons/titoSleepingIconFlat.png"
             },
             "android": {
-              "foregroundImage": "./assets/icons/MimoIconVariant4Flat.png",
-              "backgroundColor": "#FFF5EB"
+              "foregroundImage": "./assets/icons/titoSleepingIconFlat.png",
+              "backgroundColor": "#D4B896"
             }
           },
           {
-            "name": "MimoVariant5",
+            "name": "TitoVariant5",
             "ios": {
-              "light": "./assets/icons/MimoIconVariant5Flat.png",
-              "dark": "./assets/icons/MimoIconVariant5Flat.png",
-              "tinted": "./assets/icons/MimoIconVariant5Flat.png"
+              "light": "./assets/icons/titoPrayingIconFlat.png",
+              "dark": "./assets/icons/titoPrayingIconFlat.png",
+              "tinted": "./assets/icons/titoPrayingIconFlat.png"
             },
             "android": {
-              "foregroundImage": "./assets/icons/MimoIconVariant5Flat.png",
-              "backgroundColor": "#FFF5EB"
+              "foregroundImage": "./assets/icons/titoPrayingIconFlat.png",
+              "backgroundColor": "#D4B896"
+            }
+          },
+          {
+            "name": "TitoVariant6",
+            "ios": {
+              "light": "./assets/icons/titoReadingIconFlat.png",
+              "dark": "./assets/icons/titoReadingIconFlat.png",
+              "tinted": "./assets/icons/titoReadingIconFlat.png"
+            },
+            "android": {
+              "foregroundImage": "./assets/icons/titoReadingIconFlat.png",
+              "backgroundColor": "#D4B896"
             }
           }
         ]
@@ -145,10 +203,7 @@
       "reactCompiler": true
     },
     "extra": {
-      "router": {},
-      "eas": {
-        "projectId": "3ecc2c9f-f205-4126-94be-ed6a167c2e2a"
-      }
+      "router": {}
     }
   }
 }

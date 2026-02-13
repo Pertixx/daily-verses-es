@@ -11,6 +11,7 @@ import { ONBOARDING_PROGRESS_STEPS, ONBOARDING_STEP_MAP } from '@/constants/onbo
 import { notificationService, storageService, analytics } from '@/services';
 import { OnboardingContainer, OnboardingHeader } from '@/components/onboarding';
 import { useTheme } from '@/hooks';
+import { Image } from 'expo-image';
 
 export default function NotificationsScreen() {
   const { colors, isDark } = useTheme();
@@ -23,11 +24,11 @@ export default function NotificationsScreen() {
       // Solo habilitamos las notificaciones, la configuración detallada se hace en dailyAffirmations
       await storageService.setNotificationsEnabled(true);
       analytics.track('onboarding_step_completed', { step: 'notifications', step_number: ONBOARDING_STEP_MAP.notifications, notifications_allowed: true });
-      router.push('/(onboarding)/widget');
+      router.push('/(onboarding)/dailyAffirmations');
     } else {
       Alert.alert(
         'Permisos necesarios',
-        'Para recibir tu versículo diario, necesitamos tu permiso para enviar notificaciones. Podés cambiar esto después en Configuración.',
+        'Para recibir afirmaciones diarias, necesitamos tu permiso para enviar notificaciones. Puedes cambiar esto después en Configuración.',
         [
           { text: 'Continuar sin notificaciones', style: 'cancel', onPress: handleSkip },
           { text: 'Reintentar', onPress: handleAllow },
@@ -57,8 +58,8 @@ export default function NotificationsScreen() {
       scrollable
     >
       <OnboardingHeader
-        title="Recibí tu versículo diario"
-        subtitle='Versículo te envía la Palabra de Dios cada día para fortalecer tu fe y acompañarte en tu camino'
+        title="Alcanzá tus objetivos con notificaciones"
+        subtitle='Tito usa notificaciones diarias para ayudarte a mantenerte en camino hacia tus objetivos y convertirte en tu mejor versión'
       />
 
       {/* Permission Dialog */}
@@ -72,13 +73,13 @@ export default function NotificationsScreen() {
             <View style={styles.dialogHeader}>
               <View style={styles.appIconContainer}>
                 <View style={styles.appIconInner}>
-                  <Text style={styles.appIconEmoji}>✝️</Text>
+                  <Image style={styles.appIcon} source={require('@/assets/icons/tito.png')} />
                 </View>
               </View>
               
               <View style={styles.dialogTitleContainer}>
                 <Text style={styles.dialogTitle}>
-                  "Versículo" quiere enviarte notificaciones
+                  "Tito" quiere enviarte notificaciones
                 </Text>
               </View>
             </View>
@@ -109,7 +110,7 @@ export default function NotificationsScreen() {
         {/* Hint arrow pointing to Allow button */}
         <View style={styles.hintContainer}>
           <View style={styles.hintPill}>
-            <Text style={styles.hintText}>Quienes activan las notificaciones mantienen una constancia del 80% con su lectura diaria</Text>
+            <Text style={styles.hintText}>Quienes activan las notificaciones tienen un 80% más de probabilidades de tener éxito</Text>
           </View>
         </View>
       </Animated.View>
@@ -161,8 +162,9 @@ const createStyles = (colors: ThemeColors, isDark: boolean) =>
       shadowOpacity: 0.3,
       shadowRadius: 8,
     },
-    appIconEmoji: {
-      fontSize: 28,
+    appIcon: {
+      width: 45,
+      height: 45,
     },
     dialogTitleContainer: {
       flex: 1,

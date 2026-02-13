@@ -30,11 +30,11 @@ interface PremiumFeature {
 // ============================================================================
 
 const PREMIUM_FEATURES: PremiumFeature[] = [
+  { icon: 'book', text: '+1500 versículos' },
   { icon: 'th-large', text: 'Todas las categorías' },
-  { icon: 'paint-brush', text: 'Todos los temas' },
   { icon: 'volume-up', text: 'Audio ilimitado' },
-  { icon: 'quote-right', text: 'Muchos más versículos' },
-  { icon: 'magic', text: 'Crear mixes personalizados' },
+  { icon: 'magic', text: 'Mixes personalizados' },
+  { icon: 'paint-brush', text: 'Temas exclusivos' },
 ];
 
 // ============================================================================
@@ -51,7 +51,7 @@ export function PremiumBanner({ onPress, animationDelay = 150 }: PremiumBannerPr
     <Animated.View entering={FadeInDown.delay(animationDelay).duration(400)}>
       <Pressable onPress={handlePress}>
         <LinearGradient
-          colors={['#5B7FCC', '#4A6BB5']}
+          colors={['#8B6F4E', '#A67C52']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.container}
@@ -164,6 +164,6 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.body,
     fontWeight: Typography.fontWeight.bold,
     fontFamily: Typography.fontFamily.heading,
-    color: '#5B7FCC',
+    color: '#8B6F4E',
   },
 });

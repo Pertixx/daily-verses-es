@@ -7,7 +7,7 @@ import { useColors } from '@/hooks';
 
 export default function OnboardingLayout() {
   const colors = useColors();
-  
+
   return (
     <Stack
       screenOptions={{
@@ -21,19 +21,34 @@ export default function OnboardingLayout() {
     >
       {/* Welcome - Pantalla inicial */}
       <Stack.Screen name="welcome" />
-      
-      {/* Perfil básico */}
+
+      {/* Perfil del usuario */}
       <Stack.Screen name="name" />
-      
-      {/* Personalización */}
+
+      {/* Configuración visual */}
       <Stack.Screen name="theme" />
       <Stack.Screen name="appIcon" />
-      
+      <Stack.Screen name="vibe" />
+      <Stack.Screen name="affirmationPreview" />
+
       {/* Notificaciones */}
       <Stack.Screen name="notifications" />
       <Stack.Screen name="notificationsMissing" />
-      
-      {/* Widget y cierre */}
+      <Stack.Screen name="dailyAffirmations" />
+
+      {/* Premium / Trial */}
+      <Stack.Screen name="freeTrial" />
+      <Stack.Screen name="freeTrialReminder" />
+      <Stack.Screen
+        name="trialPaywall"
+        options={{
+          presentation: 'modal',
+          animation: 'slide_from_bottom',
+          gestureEnabled: true,
+        }}
+      />
+
+      {/* Widget y completar */}
       <Stack.Screen name="widget" />
       <Stack.Screen name="complete" />
     </Stack>

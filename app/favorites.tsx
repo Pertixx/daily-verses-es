@@ -12,14 +12,14 @@ import * as Haptics from 'expo-haptics';
 import { Spacing, Typography, BorderRadius } from '@/constants/theme';
 import { useColors } from '@/hooks';
 import { storageService, analytics } from '@/services';
-import type { FavoriteVerse } from '@/types';
+import type { FavoriteAffirmation } from '@/types';
 
 export default function FavoritesScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
-  const [favorites, setFavorites] = useState<FavoriteVerse[]>([]);
+  const [favorites, setFavorites] = useState<FavoriteAffirmation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -52,15 +52,15 @@ export default function FavoritesScreen() {
     setFavorites((prev) => prev.filter((f) => f.id !== id));
     
     // Track unfavorite
-    analytics.track('verse_unfavorited', {
-      verse_id: id,
+    analytics.track('affirmation_unfavorited', {
+      affirmation_id: id,
       category: favorite?.category || 'general',
       source: 'favorites_screen',
     });
   }, [favorites]);
 
   const renderFavoriteItem = useCallback(
-    ({ item, index }: { item: FavoriteVerse; index: number }) => (
+    ({ item, index }: { item: FavoriteAffirmation; index: number }) => (
       <Animated.View
         entering={FadeInDown.delay(index * 50).duration(300)}
         exiting={FadeOut.duration(200)}
@@ -69,11 +69,6 @@ export default function FavoritesScreen() {
         <Text style={[styles.favoriteText, { color: colors.text }]}>
           &ldquo;{item.text}&rdquo;
         </Text>
-        {item.reference && (
-          <Text style={[styles.referenceText, { color: colors.textSecondary }]}>
-            — {item.reference}
-          </Text>
-        )}
         <View style={styles.favoriteFooter}>
           <Text style={[styles.favoriteDate, { color: colors.textTertiary }]}>
             {new Date(item.favoritedAt).toLocaleDateString('es-AR', {
@@ -94,7 +89,7 @@ export default function FavoritesScreen() {
     [colors, handleRemoveFavorite]
   );
 
-  const keyExtractor = useCallback((item: FavoriteVerse) => item.id, []);
+  const keyExtractor = useCallback((item: FavoriteAffirmation) => item.id, []);
 
   const EmptyState = () => (
     <Animated.View
@@ -206,13 +201,6 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.body,
     fontWeight: Typography.fontWeight.medium,
     lineHeight: Typography.fontSize.body * 1.5,
-    marginBottom: Spacing.s,
-    fontFamily: Typography.fontFamily.body,
-  },
-  referenceText: {
-    fontSize: Typography.fontSize.caption,
-    fontWeight: Typography.fontWeight.medium,
-    fontStyle: 'italic',
     marginBottom: Spacing.m,
     fontFamily: Typography.fontFamily.body,
   },

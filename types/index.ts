@@ -1,5 +1,5 @@
 // ============================================================================
-// Type Definitions - Versículo App
+// Type Definitions - Tito App (Versículos Diarios)
 // ============================================================================
 
 // URLs legales y de soporte
@@ -17,160 +17,251 @@ export type Theme = 'light' | 'dark' | 'auto';
 /**
  * Íconos de app disponibles
  */
-export type AppIconType = 'default' | 'variant-1' | 'variant-2' | 'variant-3' | 'variant-4' | 'variant-5';
+export type AppIconType = 'default' | 'variant-1' | 'variant-2' | 'variant-3' | 'variant-4' | 'variant-5' | 'variant-6';
 
 /**
  * Fondos de pantalla disponibles
  */
-export type AppBackgroundType = 
+export type AppBackgroundType =
   | 'default'      // Fondo sólido del tema actual
-  | 'sunset'       // Gradiente cálido
+  | 'sunset'       // Gradiente naranja/rosa
   | 'ocean'        // Gradiente azul
   | 'forest'       // Gradiente verde
   | 'lavender'     // Gradiente púrpura
   | 'midnight';    // Gradiente oscuro
 
-// ============================================================================
-// Categorías de Versículos
-// ============================================================================
+/**
+ * Categoría de versículos - acepta valores dinámicos del backend
+ */
+export type AffirmationCategory = string;
 
 /**
- * Categorías de versículos bíblicos disponibles
+ * Entidad del backend (respuesta de /entities)
  */
-export type VerseCategory = 
-  | 'faith'             // Fe y Confianza
-  | 'strength'          // Fortaleza
-  | 'love'              // Amor
-  | 'hope'              // Esperanza
-  | 'peace'             // Paz
-  | 'gratitude'         // Gratitud
-  | 'wisdom'            // Sabiduría
-  | 'protection'        // Protección
-  | 'healing'           // Sanación
-  | 'provision'         // Provisión
-  | 'forgiveness'       // Perdón
-  | 'praise';           // Alabanza
+export interface BackendEntity {
+  id: string;
+  name: string;
+  display_name: string;
+  slug: string | null;
+  emoji: string | null;
+  metadata: string;
+  articles_count: number;
+}
 
 /**
  * Configuración de cada categoría
  */
 export interface CategoryConfig {
-  id: VerseCategory;
+  id: AffirmationCategory;
   name: string;
   description: string;
   icon: string;
   color: string;
   isPremium?: boolean;
+  entityId?: string;
+  entityName?: string;
 }
 
 /**
- * Configuración de todas las categorías de versículos
+ * Defaults de UI para categorías conocidas, indexados por entity.name del backend
  */
-export const VERSE_CATEGORIES: CategoryConfig[] = [
+export const DEFAULT_CATEGORY_UI_MAP: Record<string, {
+  localId: string;
+  description: string;
+  icon: string;
+  color: string;
+  isPremium: boolean;
+}> = {
+  'Esperanza': { localId: 'esperanza', description: 'Versículos que renuevan tu esperanza', icon: 'sun-o', color: '#F59E0B', isPremium: false },
+  'Paz': { localId: 'paz', description: 'Encontrá tranquilidad en la Palabra de Dios', icon: 'leaf', color: '#10B981', isPremium: false },
+  'Ansiedad': { localId: 'ansiedad', description: 'Versículos para calmar tu corazón', icon: 'cloud', color: '#6366F1', isPremium: true },
+  'Fortaleza': { localId: 'fortaleza', description: 'Fortalecé tu espíritu con la Palabra', icon: 'shield', color: '#3B82F6', isPremium: true },
+  'Animo': { localId: 'animo', description: 'Palabras de aliento para tu día', icon: 'bolt', color: '#F97316', isPremium: false },
+  'Gratitud': { localId: 'gratitud', description: 'Cultivá el agradecimiento a Dios', icon: 'gift', color: '#10B981', isPremium: false },
+  'Amor': { localId: 'amor', description: 'El amor de Dios en cada versículo', icon: 'heart', color: '#EF4444', isPremium: false },
+  'Perdon': { localId: 'perdon', description: 'Versículos sobre el perdón y la gracia', icon: 'handshake-o', color: '#8B5CF6', isPremium: true },
+  'Familia': { localId: 'familia', description: 'Versículos para bendecir tu familia', icon: 'home', color: '#D97706', isPremium: true },
+  'Confianza en Dios': { localId: 'confianza_en_dios', description: 'Confiá en el plan de Dios para tu vida', icon: 'star', color: '#C9A96E', isPremium: true },
+  'Miedo': { localId: 'miedo', description: 'Versículos para vencer el miedo', icon: 'eye', color: '#475569', isPremium: true },
+  'Tristeza': { localId: 'tristeza', description: 'Consuelo y esperanza en tiempos difíciles', icon: 'tint', color: '#64748B', isPremium: true },
+  'Sabiduria': { localId: 'sabiduria', description: 'La sabiduría que viene de lo alto', icon: 'book', color: '#7C3AED', isPremium: true },
+  'Proposito': { localId: 'proposito', description: 'Descubrí el propósito de Dios para vos', icon: 'compass', color: '#0891B2', isPremium: true },
+  'Maniana': { localId: 'maniana', description: 'Empezá tu mañana con la Palabra', icon: 'coffee', color: '#FB923C', isPremium: true },
+  'Noche': { localId: 'noche', description: 'Cerrá tu día con versículos de paz', icon: 'moon-o', color: '#4338CA', isPremium: true },
+  'Antes de Dormir': { localId: 'antes_de_dormir', description: 'Descansá en las promesas de Dios', icon: 'star-o', color: '#A78BFA', isPremium: true }
+};
+
+/**
+ * Defaults genéricos para categorías nuevas del backend sin config local
+ */
+export const GENERIC_CATEGORY_DEFAULTS = {
+  icon: 'star-o',
+  color: '#6B7280',
+  description: 'Versículos para tu bienestar',
+  isPremium: true,
+};
+
+/**
+ * Configuración fallback de todas las categorías conocidas
+ */
+export const AFFIRMATION_CATEGORIES: CategoryConfig[] = [
   {
-    id: 'faith',
-    name: 'Fe y Confianza',
-    description: 'Versículos para fortalecer tu fe en Dios',
-    icon: 'shield',
-    color: '#5B7FCC',
-    isPremium: false,
-  },
-  {
-    id: 'strength',
-    name: 'Fortaleza',
-    description: 'Palabras de fuerza para los momentos difíciles',
-    icon: 'bolt',
-    color: '#E67E22',
-    isPremium: false,
-  },
-  {
-    id: 'love',
-    name: 'Amor',
-    description: 'El amor de Dios expresado en su Palabra',
-    icon: 'heart',
-    color: '#E74C3C',
-    isPremium: false,
-  },
-  {
-    id: 'hope',
+    id: 'esperanza',
     name: 'Esperanza',
-    description: 'Promesas de esperanza para tu vida',
-    icon: 'star',
-    color: '#C9A96E',
+    description: 'Versículos que renuevan tu esperanza',
+    icon: 'sun-o',
+    color: '#F59E0B',
     isPremium: false,
+    entityName: 'Esperanza',
   },
   {
-    id: 'peace',
+    id: 'paz',
     name: 'Paz',
-    description: 'Versículos para encontrar calma y serenidad',
+    description: 'Encontrá tranquilidad en la Palabra de Dios',
     icon: 'leaf',
-    color: '#8B5CF6',
+    color: '#10B981',
     isPremium: false,
+    entityName: 'Paz',
   },
   {
-    id: 'gratitude',
+    id: 'ansiedad',
+    name: 'Ansiedad',
+    description: 'Versículos para calmar tu corazón',
+    icon: 'cloud',
+    color: '#6366F1',
+    isPremium: true,
+    entityName: 'Ansiedad',
+  },
+  {
+    id: 'fortaleza',
+    name: 'Fortaleza',
+    description: 'Fortalecé tu espíritu con la Palabra',
+    icon: 'shield',
+    color: '#3B82F6',
+    isPremium: true,
+    entityName: 'Fortaleza',
+  },
+  {
+    id: 'animo',
+    name: 'Ánimo',
+    description: 'Palabras de aliento para tu día',
+    icon: 'bolt',
+    color: '#F97316',
+    isPremium: false,
+    entityName: 'Animo',
+  },
+  {
+    id: 'gratitud',
     name: 'Gratitud',
-    description: 'Agradecimiento al Señor por sus bendiciones',
+    description: 'Cultivá el agradecimiento a Dios',
     icon: 'gift',
     color: '#10B981',
     isPremium: false,
+    entityName: 'Gratitud',
   },
   {
-    id: 'wisdom',
-    name: 'Sabiduría',
-    description: 'Sabiduría divina para guiar tu camino',
-    icon: 'book',
-    color: '#3B82F6',
-    isPremium: true,
+    id: 'amor',
+    name: 'Amor',
+    description: 'El amor de Dios en cada versículo',
+    icon: 'heart',
+    color: '#EF4444',
+    isPremium: false,
+    entityName: 'Amor',
   },
   {
-    id: 'protection',
-    name: 'Protección',
-    description: 'La protección de Dios sobre tu vida',
-    icon: 'umbrella',
-    color: '#6366F1',
-    isPremium: true,
-  },
-  {
-    id: 'healing',
-    name: 'Sanación',
-    description: 'Promesas de sanidad y restauración',
-    icon: 'heartbeat',
-    color: '#22C55E',
-    isPremium: true,
-  },
-  {
-    id: 'provision',
-    name: 'Provisión',
-    description: 'Dios provee para todas tus necesidades',
-    icon: 'sun-o',
-    color: '#F59E0B',
-    isPremium: true,
-  },
-  {
-    id: 'forgiveness',
+    id: 'perdon',
     name: 'Perdón',
-    description: 'El perdón y la misericordia de Dios',
-    icon: 'hand-peace-o',
-    color: '#14B8A6',
+    description: 'Versículos sobre el perdón y la gracia',
+    icon: 'handshake-o',
+    color: '#8B5CF6',
     isPremium: true,
+    entityName: 'Perdon',
   },
   {
-    id: 'praise',
-    name: 'Alabanza',
-    description: 'Versículos de alabanza y adoración',
-    icon: 'music',
-    color: '#EC4899',
+    id: 'familia',
+    name: 'Familia',
+    description: 'Versículos para bendecir tu familia',
+    icon: 'home',
+    color: '#D97706',
     isPremium: true,
+    entityName: 'Familia',
   },
+  {
+    id: 'confianza_en_dios',
+    name: 'Confianza en Dios',
+    description: 'Confiá en el plan de Dios para tu vida',
+    icon: 'star',
+    color: '#C9A96E',
+    isPremium: true,
+    entityName: 'Confianza en Dios',
+  },
+  {
+    id: 'miedo',
+    name: 'Miedo',
+    description: 'Versículos para vencer el miedo',
+    icon: 'eye',
+    color: '#475569',
+    isPremium: true,
+    entityName: 'Miedo',
+  },
+  {
+    id: 'tristeza',
+    name: 'Tristeza',
+    description: 'Consuelo y esperanza en tiempos difíciles',
+    icon: 'tint',
+    color: '#64748B',
+    isPremium: true,
+    entityName: 'Tristeza',
+  },
+  {
+    id: 'sabiduria',
+    name: 'Sabiduría',
+    description: 'La sabiduría que viene de lo alto',
+    icon: 'book',
+    color: '#7C3AED',
+    isPremium: true,
+    entityName: 'Sabiduria',
+  },
+  {
+    id: 'proposito',
+    name: 'Propósito',
+    description: 'Descubrí el propósito de Dios para vos',
+    icon: 'compass',
+    color: '#0891B2',
+    isPremium: true,
+    entityName: 'Proposito',
+  },
+  {
+    id: 'maniana',
+    name: 'Mañana',
+    description: 'Empezá tu mañana con la Palabra',
+    icon: 'coffee',
+    color: '#FB923C',
+    isPremium: true,
+    entityName: 'Maniana',
+  },
+  {
+    id: 'noche',
+    name: 'Noche',
+    description: 'Cerrá tu día con versículos de paz',
+    icon: 'moon-o',
+    color: '#4338CA',
+    isPremium: true,
+    entityName: 'Noche',
+  },
+  {
+    id: 'antes_de_dormir',
+    name: 'Antes de Dormir',
+    description: 'Descansá en las promesas de Dios',
+    icon: 'star-o',
+    color: '#A78BFA',
+    isPremium: true,
+    entityName: 'Antes de Dormir',
+  }
 ];
 
-// ============================================================================
-// User Profile (simplificado para Versículo)
-// ============================================================================
-
 /**
- * Perfil del usuario
+ * Perfil del usuario (información recolectada en onboarding)
  */
 export interface UserProfile {
   /** Nombre del usuario */
@@ -180,7 +271,7 @@ export interface UserProfile {
   /** Fondo de pantalla seleccionado */
   appBackground?: AppBackgroundType;
   /** Categorías de versículos asignadas */
-  assignedCategories?: VerseCategory[];
+  assignedCategories?: AffirmationCategory[];
 }
 
 /**
@@ -218,18 +309,16 @@ export interface StreakData {
 }
 
 /**
- * Versículo favorito
+ * Afirmación favorita
  */
-export interface FavoriteVerse {
-  /** ID único del versículo */
+export interface FavoriteAffirmation {
+  /** ID único de la afirmación */
   id: string;
-  /** Texto del versículo */
+  /** Texto de la afirmación */
   text: string;
-  /** Referencia bíblica (ej: "Juan 3:16") */
-  reference: string;
-  /** Categoría del versículo */
+  /** Categoría de la afirmación */
   category: string;
-  /** Fecha en que se marcó como favorito (ISO string) */
+  /** Fecha en que se marcó como favorita (ISO string) */
   favoritedAt: string;
 }
 
@@ -249,27 +338,29 @@ export interface UserData {
   notificationSettings: NotificationSettings;
   /** Datos de racha */
   streak: StreakData;
-  /** Versículos favoritos */
-  favorites: FavoriteVerse[];
+  /** Afirmaciones favoritas */
+  favorites: FavoriteAffirmation[];
   /** Fecha de creación de la cuenta local (ISO string) */
   createdAt: string;
   /** Última actualización (ISO string) */
   updatedAt: string;
 }
 
-// ============================================================================
-// Onboarding Types
-// ============================================================================
-
 /**
  * Paso del onboarding - Orden de las pantallas
  */
-export type OnboardingStep = 
+export type OnboardingStep =
   | 'welcome'
   | 'name'
   | 'theme'
   | 'app_icon'
+  | 'vibe'
+  | 'affirmation_preview'
   | 'notifications'
+  | 'daily_affirmations'
+  | 'free_trial'
+  | 'free_trial_reminder'
+  | 'trial_paywall'
   | 'widget'
   | 'complete';
 
@@ -281,17 +372,16 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
   'name',
   'theme',
   'app_icon',
+  'vibe',
+  'affirmation_preview',
   'notifications',
+  'daily_affirmations',
+  'free_trial',
+  'free_trial_reminder',
+  'trial_paywall',
   'widget',
-  'complete',
+  'complete'
 ];
-
-/**
- * Número total de pasos del onboarding (excluyendo welcome y complete)
- */
-export const ONBOARDING_PROGRESS_STEPS = ONBOARDING_STEPS.filter(
-  step => step !== 'welcome' && step !== 'complete'
-).length;
 
 /**
  * Estado del onboarding
@@ -302,19 +392,19 @@ export interface OnboardingState {
 }
 
 // ============================================================================
-// Verse Types
+// Affirmation Types
 // ============================================================================
 
 /**
- * Un versículo bíblico individual
+ * Un versículo individual
  */
-export interface Verse {
+export interface Affirmation {
   /** ID único del versículo */
   id: string;
   /** Texto del versículo */
   text: string;
-  /** Referencia bíblica completa (ej: "Juan 3:16") */
-  reference: string;
+  /** Título/referencia bíblica del versículo */
+  title?: string;
   /** URL del audio narrado */
   audioSource?: string;
   /** Duración del audio en segundos */
@@ -322,35 +412,35 @@ export interface Verse {
 }
 
 /**
- * Estructura del archivo JSON de versículos
+ * Estructura del archivo JSON de afirmaciones
  */
-export interface VerseFile {
+export interface AffirmationFile {
   /** Lista de versículos */
-  verses: Array<{
+  versiculos: Array<{
     id: string;
+    title?: string;
     text: string;
-    reference: string;
     audio_source?: string;
     audio_source_duration?: number;
   }>;
-  /** Nombre de la categoría */
-  category: string;
-  /** Nombre visible de la categoría */
-  category_name: string;
+  /** Nombre de la entidad/categoría */
+  entity: string;
+  /** ID de la entidad */
+  entity_id: string;
   /** Total de versículos */
   total: number;
 }
 
 /**
- * Versículo con metadata adicional para la UI
+ * Afirmación con metadata adicional para la UI
  */
-export interface VerseWithMeta extends Verse {
-  /** Si está marcado como favorito */
+export interface AffirmationWithMeta extends Affirmation {
+  /** Si está marcada como favorita */
   isFavorite: boolean;
 }
 
 // ============================================================================
-// Mix Types - Sistema de Mezclas de Versículos
+// Mix Types - Sistema de Mezclas de Afirmaciones
 // ============================================================================
 
 /**
@@ -388,7 +478,8 @@ export interface BaseMix {
  */
 export interface PersonalizedMix extends BaseMix {
   type: 'personalized';
-  categories: VerseCategory[];
+  /** Categorías incluidas en el mix */
+  categories: AffirmationCategory[];
 }
 
 /**
@@ -396,7 +487,8 @@ export interface PersonalizedMix extends BaseMix {
  */
 export interface CategoryMix extends BaseMix {
   type: 'category';
-  categoryId: VerseCategory;
+  /** ID de la categoría */
+  categoryId: AffirmationCategory;
 }
 
 /**
@@ -404,6 +496,7 @@ export interface CategoryMix extends BaseMix {
  */
 export interface FavoritesMix extends BaseMix {
   type: 'favorites';
+  /** Cantidad mínima de favoritos requerida para activar */
   minRequired: number;
 }
 
@@ -419,7 +512,9 @@ export interface CustomPhrasesMix extends BaseMix {
  */
 export interface UserCustomMix extends BaseMix {
   type: 'user_custom';
-  categories: VerseCategory[];
+  /** Categorías seleccionadas por el usuario */
+  categories: AffirmationCategory[];
+  /** Fecha de última modificación (ISO string) */
   updatedAt: string;
 }
 
@@ -437,7 +532,9 @@ export type Mix =
  * Referencia al mix activo
  */
 export interface ActiveMixReference {
+  /** ID del mix activo */
   mixId: string;
+  /** Tipo del mix (para recuperación rápida) */
   mixType: MixType;
 }
 
@@ -445,7 +542,9 @@ export interface ActiveMixReference {
  * Límites del sistema de mixes
  */
 export const MIX_LIMITS = {
+  /** Máximo de mixes custom que puede crear un usuario premium */
   MAX_USER_CUSTOM_MIXES: 7,
+  /** Mínimo de favoritos requeridos para activar el mix de favoritos */
   MIN_FAVORITES_REQUIRED: 7,
 } as const;
 
@@ -453,6 +552,7 @@ export const MIX_LIMITS = {
  * Límites de reproducción de audio
  */
 export const AUDIO_LIMITS = {
+  /** Máximo de versículos distintos que puede reproducir un usuario no premium */
   MAX_FREE_AUDIO_PLAYS: 20,
 } as const;
 
@@ -469,86 +569,97 @@ export interface CustomPhrase {
 // Analytics Types
 // ============================================================================
 
+/**
+ * Eventos de analytics disponibles
+ */
 export type AnalyticsEvent =
-  | 'onboarding_started'
-  | 'onboarding_step_completed'
-  | 'onboarding_completed'
-  | 'onboarding_skipped'
+  // Onboarding
+  | 'onboarding_started' // Done
+  | 'onboarding_step_completed' // Done
+  | 'onboarding_completed' // Done
+  | 'onboarding_skipped' // Done
+  // Auth & User
   | 'app_opened'
   | 'app_backgrounded'
   | 'user_registered'
   | 'profile_updated'
-  | 'affirmation_viewed'
-  | 'affirmation_favorited'
-  | 'affirmation_unfavorited'
-  | 'affirmation_shared'
-  | 'affirmation_audio_played'
-  | 'mix_created'
-  | 'mix_activated'
-  | 'mix_deleted'
-  | 'mix_updated'
+  // Affirmations
+  | 'affirmation_viewed' // Done
+  | 'affirmation_favorited' // Done
+  | 'affirmation_unfavorited' // Done
+  | 'affirmation_shared' // Done
+  | 'affirmation_audio_played' // Done
+  | 'affirmation_explanation_viewed' // Done
+  | 'affirmations_sync_started'
+  | 'affirmations_sync_completed'
+  | 'affirmations_sync_failed'
+  | 'affirmations_category_sync_failed'
+  // Mixes
+  | 'mix_created' // Done
+  | 'mix_activated' // Done
+  | 'mix_deleted' // Done
+  | 'mix_updated' // Done
+  // Categories
   | 'category_viewed'
   | 'category_selected'
-  | 'paywall_viewed'
-  | 'paywall_dismissed'
-  | 'purchase_intent'
-  | 'purchase_started'
-  | 'purchase_completed'
-  | 'purchase_failed'
-  | 'purchase_restored'
-  | 'trial_started'
-  | 'notification_enabled'
-  | 'notification_disabled'
-  | 'notification_received'
-  | 'notification_opened'
-  | 'streak_updated'
-  | 'streak_milestone_reached'
-  | 'streak_lost'
-  | 'theme_changed'
-  | 'app_icon_changed'
-  | 'app_background_changed'
-  | 'custom_phrase_created'
-  | 'custom_phrase_deleted'
+  // Purchases
+  | 'paywall_viewed' // Done
+  | 'paywall_dismissed' // Done
+  | 'purchase_intent' // Done
+  | 'purchase_started' // Done
+  | 'purchase_completed' // Done
+  | 'purchase_failed' // Done
+  | 'purchase_restored' // Done
+  | 'trial_started' // Done
+  // Notifications
+  | 'notification_enabled' // Done
+  | 'notification_disabled' // Done
+  | 'notification_received' // Done
+  | 'notification_opened' // Done
+  // Streak
+  | 'streak_updated' // Done
+  | 'streak_milestone_reached' // Done
+  | 'streak_lost' // Done
+  // Settings
+  | 'theme_changed' // Done
+  | 'app_icon_changed' // Done
+  | 'app_background_changed' // Done
+  // Custom Phrases
+  | 'custom_phrase_created' // Done
+  | 'custom_phrase_deleted' // Done
+  // Widget
   | 'widget_configured'
+  // Errors
   | 'error_occurred';
 
+/**
+ * Propiedades adicionales de un evento
+ */
 export interface AnalyticsEventProperties {
   [key: string]: string | number | boolean | undefined;
 }
 
+/**
+ * Evento de analytics completo
+ */
 export interface AnalyticsEventPayload {
   event: AnalyticsEvent;
   properties?: AnalyticsEventProperties;
   timestamp: number;
 }
 
+/**
+ * Configuración del servicio de analytics
+ */
 export interface AnalyticsConfig {
+  /** ID del feed de Contentor */
   feedId: string;
+  /** Tamaño máximo del batch antes de enviar */
   batchSize: number;
+  /** Intervalo en ms para flush automático */
   flushInterval: number;
+  /** Si el tracking está habilitado */
   enabled: boolean;
+  /** Si se debe loggear en consola (dev) */
   debug: boolean;
 }
-
-// ============================================================================
-// Backward Compatibility Aliases
-// (Mantener hasta que se actualicen todos los consumidores en fases posteriores)
-// ============================================================================
-
-/** @deprecated Usar VerseCategory */
-export type AffirmationCategory = VerseCategory;
-
-/** @deprecated Usar VERSE_CATEGORIES */
-export const AFFIRMATION_CATEGORIES = VERSE_CATEGORIES;
-
-/** @deprecated Usar Verse */
-export type Affirmation = Verse;
-
-/** @deprecated Usar VerseFile */
-export type AffirmationFile = VerseFile;
-
-/** @deprecated Usar VerseWithMeta */
-export type AffirmationWithMeta = VerseWithMeta;
-
-/** @deprecated Usar FavoriteVerse */
-export type FavoriteAffirmation = FavoriteVerse;

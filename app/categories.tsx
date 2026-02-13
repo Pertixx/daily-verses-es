@@ -3,7 +3,7 @@
 // ============================================================================
 
 import { useState, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
@@ -13,14 +13,15 @@ import * as Haptics from 'expo-haptics';
 import { Spacing, Typography, BorderRadius } from '@/constants/theme';
 import { useColors } from '@/hooks';
 import { storageService, revenueCatService, notificationService, widgetService, analytics } from '@/services';
-import { 
-  VERSE_CATEGORIES, 
+import {
   MIX_LIMITS,
-  type VerseCategory,
+  type AffirmationCategory,
   type UserCustomMix,
   type ActiveMixReference,
   type MixType,
+  type CategoryConfig,
 } from '@/types';
+import { getAvailableCategories } from '@/services/category.service';
 import { MixCard } from '@/components/MixCard';
 
 // ============================================================================
@@ -73,7 +74,7 @@ export default function CategoriesScreen() {
   const router = useRouter();
 
   // Categorías asignadas al usuario (las del mix personalizado desde onboarding)
-  const [mixCategories, setMixCategories] = useState<VerseCategory[]>([]);
+  const [mixCategories, setMixCategories] = useState<AffirmationCategory[]>([]);
   // Mixes custom creados por el usuario
   const [userCustomMixes, setUserCustomMixes] = useState<UserCustomMix[]>([]);
   // Mix activo
@@ -83,6 +84,8 @@ export default function CategoriesScreen() {
   const [customPhrasesCount, setCustomPhrasesCount] = useState(0);
   // Estado premium
   const [isPremium, setIsPremium] = useState(false);
+  // Categorías dinámicas del backend
+  const [allCategories, setAllCategories] = useState<CategoryConfig[]>([]);
 
   // Cargar datos cuando la pantalla recibe foco
   useFocusEffect(
@@ -93,17 +96,19 @@ export default function CategoriesScreen() {
 
   const loadData = async () => {
     try {
-      const [profile, favorites, customPhrases, customMixes, currentActiveMix, hasSubscription] = await Promise.all([
+      const [profile, favorites, customPhrases, customMixes, currentActiveMix, hasSubscription, availableCategories] = await Promise.all([
         storageService.getProfile(),
         storageService.getFavorites(),
         storageService.getCustomPhrases(),
         storageService.getUserCustomMixes(),
         storageService.getActiveMix(),
         revenueCatService.hasActiveSubscription(),
+        getAvailableCategories(),
       ]);
 
-      const userMixCategories = profile?.assignedCategories || ['faith', 'strength', 'love'];
+      const userMixCategories = profile?.assignedCategories || ['esperanza', 'paz', 'amor', 'gratitud', 'animo', 'fe_y_esperanza'];
       setMixCategories(userMixCategories);
+      setAllCategories(availableCategories);
       setUserCustomMixes(customMixes);
       setFavoritesCount(favorites?.length || 0);
       setCustomPhrasesCount(customPhrases?.length || 0);
@@ -124,13 +129,13 @@ export default function CategoriesScreen() {
 
   // Mixes de categorías "Para ti" (las del mix del usuario desde onboarding)
   const forYouCategoryMixes = useMemo(() => {
-    return VERSE_CATEGORIES.filter(cat => mixCategories.includes(cat.id));
-  }, [mixCategories]);
+    return allCategories.filter(cat => mixCategories.includes(cat.id));
+  }, [mixCategories, allCategories]);
 
   // Mixes de categorías "Explorar" (las que no están en el mix)
   const exploreCategoryMixes = useMemo(() => {
-    return VERSE_CATEGORIES.filter(cat => !mixCategories.includes(cat.id));
-  }, [mixCategories]);
+    return allCategories.filter(cat => !mixCategories.includes(cat.id));
+  }, [mixCategories, allCategories]);
 
   const handleBack = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -150,11 +155,11 @@ export default function CategoriesScreen() {
       mix_type: mixType,
     });
     
-    // Actualizar notificaciones con versículos del nuevo mix
+    // Actualizar notificaciones con afirmaciones del nuevo mix
     await notificationService.updateNotificationsFromStorage();
     
     // Sincronizar widget con el nuevo mix
-    await widgetService.syncVersesToWidget();
+    await widgetService.syncAffirmationsToWidget();
   }, []);
 
   // Verificar si un mix está activo
@@ -193,7 +198,7 @@ export default function CategoriesScreen() {
   }, [activateMix, isPremium, customPhrasesCount, router]);
 
   // Handler para mix de categoría individual
-  const handleCategoryMixPress = useCallback((categoryId: VerseCategory, isPremiumCategory: boolean) => {
+  const handleCategoryMixPress = useCallback((categoryId: AffirmationCategory, isPremiumCategory: boolean) => {
     if (isPremiumCategory && !isPremium) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       analytics.track('paywall_viewed', { source: 'categories_premium_category', category: categoryId });
@@ -260,9 +265,10 @@ export default function CategoriesScreen() {
       >
         <View style={styles.headerCenter}>
           <Text style={[styles.headerTitle, { color: colors.text }]}>Categorías</Text>
-          <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
-            Explorá la Palabra de Dios
-          </Text>
+          <Image 
+            source={require('@/assets/icons/tito.png')} 
+            style={styles.headerIcon} 
+          />
         </View>
 
         {/* Sección: Mis Mezclas (custom del usuario) */}
@@ -324,8 +330,8 @@ export default function CategoriesScreen() {
         )}
 
         {/* Sección principal: Mix Personalizado, Favoritos, Frases propias */}
-        <SectionHeader 
-          title="Colecciones" 
+        <SectionHeader
+          title="Colecciones"
           subtitle="Tus versículos especiales"
           delay={50}
         />
@@ -349,7 +355,7 @@ export default function CategoriesScreen() {
             color="#EF4444"
             isActive={isMixActive(FAVORITES_MIX_ID)}
             count={favoritesCount}
-            countSuffix="versículos"
+            countSuffix="frases"
             isLocked={favoritesCount < MIX_LIMITS.MIN_FAVORITES_REQUIRED}
             lockMessage={`Mínimo ${MIX_LIMITS.MIN_FAVORITES_REQUIRED} favoritos`}
             onPress={handleFavoritesMixPress}
@@ -358,12 +364,12 @@ export default function CategoriesScreen() {
 
           {/* Mis Propias Frases */}
           <MixCard
-            name="Mis propios versículos"
+            name="Mis propias frases"
             icon="pencil"
             color="#6366F1"
             isActive={isMixActive(CUSTOM_PHRASES_MIX_ID)}
             count={customPhrasesCount}
-            countSuffix="versículos"
+            countSuffix="frases"
             isLocked={!isPremium}
             lockMessage="Premium"
             onPress={handleCustomPhrasesMixPress}
@@ -385,7 +391,7 @@ export default function CategoriesScreen() {
             onPress={handleEditCustomPhrasesPress}
           >
             <FontAwesome name="pencil" size={14} color={colors.textSecondary} />
-            <Text style={[styles.quickActionText, { color: colors.textSecondary }]}>Editar versículos</Text>
+            <Text style={[styles.quickActionText, { color: colors.textSecondary }]}>Editar frases</Text>
           </Pressable>
         </View>
 
@@ -455,7 +461,7 @@ export default function CategoriesScreen() {
                     Desbloquea todo
                   </Text>
                   <Text style={[styles.premiumBannerSubtitle, { color: colors.textSecondary }]}>
-                    Crea tus propias mezclas y accedé a todas las categorías bíblicas
+                    Crea tus propias mezclas y accede a todas las categorías
                   </Text>
                 </View>
               </View>
@@ -493,11 +499,11 @@ const styles = StyleSheet.create({
   headerCenter: {
     alignItems: 'center',
     paddingTop: Spacing.xl,
-    paddingBottom: Spacing.l,
   },
-  headerSubtitle: {
-    fontSize: Typography.fontSize.body,
-    marginTop: Spacing.xs,
+  headerIcon: {
+    width: 150,
+    height: 150,
+    marginBottom: Spacing.s,
   },
   headerTitle: {
     fontSize: Typography.fontSize.h2,

@@ -42,7 +42,7 @@ function FeatureItem({ icon, iconColor, title, description, delay, colors, isDar
       <View
         style={[
           featureStyles.iconContainer,
-          { backgroundColor: isDark ? 'rgba(91, 127, 204, 0.15)' : 'rgba(91, 127, 204, 0.1)' },
+          { backgroundColor: isDark ? 'rgba(255, 154, 86, 0.15)' : 'rgba(255, 154, 86, 0.1)' },
         ]}
       >
         <Text style={featureStyles.icon}>{icon}</Text>
@@ -82,11 +82,11 @@ const featureStyles = StyleSheet.create({
   },
   title: {
     fontSize: Typography.fontSize.body,
-    fontFamily: 'Nunito_700Bold',
+    fontFamily: 'DMSans_700Bold',
   },
   description: {
     fontSize: Typography.fontSize.caption,
-    fontFamily: 'Nunito_500Medium',
+    fontFamily: 'DMSans_500Medium',
     lineHeight: 20,
   },
 });
@@ -118,7 +118,7 @@ export default function NotificationsMissingScreen() {
         if (hasPermission) {
           // Habilitar notificaciones y navegar a configuración
           await storageService.setNotificationsEnabled(true);
-          router.push('/(onboarding)/widget');
+          router.push('/(onboarding)/dailyAffirmations');
         }
       }
       appState.current = nextAppState;
@@ -139,24 +139,24 @@ export default function NotificationsMissingScreen() {
   }, []);
 
   const handleSkip = useCallback(() => {
-    router.push('/(onboarding)/widget');
+    router.push('/(onboarding)/dailyAffirmations');
   }, []);
 
   const features = [
     {
       icon: '⏰',
       title: 'Horarios personalizados',
-      description: 'Versículos en tus momentos ideales, al despertar o antes de dormir',
+      description: 'Afirmaciones en tus momentos ideales, no a cualquier hora',
     },
     {
       icon: '🔥',
       title: 'Protección de racha',
-      description: 'Recordatorios suaves para mantener tu lectura diaria',
+      description: 'Recordatorios suaves para mantener el impulso cuando la vida se complica',
     },
     {
       icon: '✨',
-      title: 'Momentos de fe',
-      description: 'La Palabra de Dios justo cuando más la necesitás',
+      title: 'Momentos sorpresa',
+      description: 'Positividad inesperada a lo largo del día, justo cuando más la necesitás',
     },
   ];
 
@@ -184,8 +184,9 @@ export default function NotificationsMissingScreen() {
       }
     >
       <OnboardingHeader
+        icon={require('@/assets/icons/tito.png')}
         title="Te vas a perder..."
-        subtitle="Sin notificaciones, no podrás aprovechar estas funciones diseñadas para tu crecimiento espiritual"
+        subtitle="Sin notificaciones, no podrás aprovechar estas funciones diseñadas para tu bienestar"
       />
 
       {/* Features List */}
@@ -234,7 +235,7 @@ const createStyles = (colors: ThemeColors, isDark: boolean) =>
     },
     skipText: {
       fontSize: Typography.fontSize.caption,
-      fontFamily: 'Nunito_600SemiBold',
+      fontFamily: 'DMSans_600SemiBold',
       color: colors.textSecondary,
       textDecorationLine: 'underline',
       paddingVertical: Spacing.s,
@@ -249,7 +250,7 @@ const createStyles = (colors: ThemeColors, isDark: boolean) =>
     },
     encouragementText: {
       fontSize: Typography.fontSize.caption,
-      fontFamily: 'Nunito_500Medium',
+      fontFamily: 'DMSans_500Medium',
       textAlign: 'center',
       flex: 1,
     },

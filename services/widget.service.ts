@@ -5,10 +5,10 @@
 import { ExtensionStorage } from '@bacons/apple-targets';
 import { Platform } from 'react-native';
 import { storageService } from './storage.service';
-import { verseService } from './verse.service';
+import { affirmationService } from './affirmation.service';
 import { revenueCatService } from './revenuecat.service';
-import type { VerseCategory } from '@/types';
-import { VERSE_CATEGORIES } from '@/types';
+import type { AffirmationCategory } from '@/types';
+import { getAvailableCategories } from './category.service';
 
 // App Group ID - debe coincidir con el de app.json y expo-target.config.js
 const APP_GROUP_ID = 'group.com.startnode.tito';
@@ -18,17 +18,17 @@ const widgetStorage = new ExtensionStorage(APP_GROUP_ID);
 
 // Keys para el storage compartido
 const WIDGET_KEYS = {
-  VERSES: 'widgetAffirmations',
+  AFFIRMATIONS: 'widgetAffirmations',
   LAST_UPDATED: 'widgetLastUpdated',
 } as const;
 
-// Cantidad de versículos a enviar al widget
-const WIDGET_VERSES_COUNT = 20;
+// Cantidad de afirmaciones a enviar al widget
+const WIDGET_AFFIRMATIONS_COUNT = 20;
 
 /**
  * Interfaz de datos del widget
  */
-interface WidgetVerse {
+interface WidgetAffirmation {
   id: string;
   text: string;
 }
@@ -38,9 +38,9 @@ interface WidgetVerse {
  */
 class WidgetService {
   /**
-   * Sincroniza los versículos del mix activo al widget
+   * Sincroniza las afirmaciones del mix activo al widget
    */
-  async syncVersesToWidget(): Promise<boolean> {
+  async syncAffirmationsToWidget(): Promise<boolean> {
     // Solo ejecutar en iOS
     if (Platform.OS !== 'ios') {
       console.log('📱 Widget sync: No es iOS, omitiendo...');
@@ -59,10 +59,11 @@ class WidgetService {
       }
 
       // Helper para filtrar categorías premium si el usuario no es premium
-      const filterCategoriesByAccess = (categories: VerseCategory[]): VerseCategory[] => {
+      const allCategories = await getAvailableCategories();
+      const filterCategoriesByAccess = (categories: AffirmationCategory[]): AffirmationCategory[] => {
         if (isPremium) return categories;
         return categories.filter(catId => {
-          const catConfig = VERSE_CATEGORIES.find(c => c.id === catId);
+          const catConfig = allCategories.find(c => c.id === catId);
           return catConfig && !catConfig.isPremium;
         });
       };
@@ -82,24 +83,24 @@ class WidgetService {
         console.log('📱 Widget sync: No hay categorías accesibles (usuario no premium)');
         // Usar categorías por defecto gratuitas
         const profile = await storageService.getProfile();
-        const defaultCategories = profile?.assignedCategories ?? ['faith', 'strength', 'love'];
+        const defaultCategories = profile?.assignedCategories ?? ['self_love', 'motivation', 'positivity'];
         const accessibleDefaults = filterCategoriesByAccess(defaultCategories);
         if (accessibleDefaults.length === 0) {
           return false;
         }
-        const allVerses = verseService.getVersesByCategories(accessibleDefaults);
-        return this.saveAndReloadWidget(allVerses);
+        const allAffirmations = await affirmationService.getAffirmationsByCategories(accessibleDefaults);
+        return this.saveAndReloadWidget(allAffirmations);
       }
 
-      // Obtener versículos para esas categorías
-      const allVerses = verseService.getVersesByCategories(categories);
+      // Obtener afirmaciones para esas categorías
+      const allAffirmations = await affirmationService.getAffirmationsByCategories(categories);
 
-      if (allVerses.length === 0) {
-        console.log('📱 Widget sync: No hay versículos disponibles');
+      if (allAffirmations.length === 0) {
+        console.log('📱 Widget sync: No hay afirmaciones disponibles');
         return false;
       }
 
-      return this.saveAndReloadWidget(allVerses);
+      return this.saveAndReloadWidget(allAffirmations);
     } catch (error) {
       console.error('📱 Widget sync: Error al sincronizar:', error);
       return false;
@@ -107,23 +108,23 @@ class WidgetService {
   }
 
   /**
-   * Guarda los versículos en el widget y lo recarga
+   * Guarda las afirmaciones en el widget y lo recarga
    */
-  private async saveAndReloadWidget(allVerses: { id: string; text: string }[]): Promise<boolean> {
-    // Mezclar y tomar solo los necesarios para el widget
-    const shuffled = this.shuffleArray([...allVerses]);
-    const selectedVerses = shuffled.slice(0, WIDGET_VERSES_COUNT);
+  private async saveAndReloadWidget(allAffirmations: { id: string; text: string; title?: string }[]): Promise<boolean> {
+    // Mezclar y tomar solo las necesarias para el widget
+    const shuffled = this.shuffleArray([...allAffirmations]);
+    const selectedAffirmations = shuffled.slice(0, WIDGET_AFFIRMATIONS_COUNT);
 
-    // Preparar datos para el widget (solo id y text)
-    const widgetVerses: WidgetVerse[] = selectedVerses.map(a => ({
+    // Preparar datos para el widget (solo id y text, usando title si existe)
+    const widgetAffirmations: WidgetAffirmation[] = selectedAffirmations.map(a => ({
       id: a.id,
-      text: a.text,
+      text: a.title || a.text,
     }));
 
     // Guardar en el storage compartido
     await widgetStorage.set(
-      WIDGET_KEYS.VERSES,
-      JSON.stringify(widgetVerses)
+      WIDGET_KEYS.AFFIRMATIONS,
+      JSON.stringify(widgetAffirmations)
     );
 
     await widgetStorage.set(
@@ -131,17 +132,17 @@ class WidgetService {
       new Date().toISOString()
     );
 
-    // Recargar el widget para que muestre los nuevos versículos
-    await ExtensionStorage.reloadWidget('MimoAffirmationWidget');
+    // Recargar el widget para que muestre las nuevas afirmaciones
+    await ExtensionStorage.reloadWidget('TitoVerseWidget');
 
-    console.log(`📱 Widget sync: ${widgetVerses.length} versículos sincronizados`);
+    console.log(`📱 Widget sync: ${widgetAffirmations.length} afirmaciones sincronizadas`);
     return true;
   }
 
   /**
    * Obtiene las categorías del mix activo
    */
-  private async getActiveCategories(): Promise<VerseCategory[]> {
+  private async getActiveCategories(): Promise<AffirmationCategory[]> {
     try {
       const activeMix = await storageService.getActiveMix();
 
@@ -161,7 +162,7 @@ class WidgetService {
         case 'category': {
           // Mix de categoría: extraer la categoría del mixId
           // El formato es "category-{categoryId}"
-          const categoryId = activeMix.mixId.replace('category-', '') as VerseCategory;
+          const categoryId = activeMix.mixId.replace('category-', '') as AffirmationCategory;
           return [categoryId];
         }
 
@@ -195,19 +196,19 @@ class WidgetService {
   }
 
   /**
-   * Sincroniza versículos personalizados (favoritos o frases custom)
+   * Sincroniza afirmaciones personalizadas (favoritos o frases custom)
    */
-  async syncCustomVersesToWidget(verses: { id: string; text: string }[]): Promise<boolean> {
+  async syncCustomAffirmationsToWidget(affirmations: { id: string; text: string }[]): Promise<boolean> {
     if (Platform.OS !== 'ios') {
       return false;
     }
 
     try {
-      const widgetVerses = verses.slice(0, WIDGET_VERSES_COUNT);
+      const widgetAffirmations = affirmations.slice(0, WIDGET_AFFIRMATIONS_COUNT);
 
       await widgetStorage.set(
-        WIDGET_KEYS.VERSES,
-        JSON.stringify(widgetVerses)
+        WIDGET_KEYS.AFFIRMATIONS,
+        JSON.stringify(widgetAffirmations)
       );
 
       await widgetStorage.set(
@@ -215,9 +216,9 @@ class WidgetService {
         new Date().toISOString()
       );
 
-      await ExtensionStorage.reloadWidget('MimoAffirmationWidget');
+      await ExtensionStorage.reloadWidget('TitoVerseWidget');
 
-      console.log(`📱 Widget sync: ${widgetVerses.length} versículos custom sincronizados`);
+      console.log(`📱 Widget sync: ${widgetAffirmations.length} afirmaciones custom sincronizadas`);
       return true;
     } catch (error) {
       console.error('📱 Widget sync: Error al sincronizar custom:', error);
@@ -234,7 +235,7 @@ class WidgetService {
     }
 
     try {
-      await ExtensionStorage.reloadWidget('MimoAffirmationWidget');
+      await ExtensionStorage.reloadWidget('TitoVerseWidget');
       console.log('📱 Widget: Recargado');
     } catch (error) {
       console.error('📱 Widget: Error al recargar:', error);
@@ -250,9 +251,9 @@ class WidgetService {
     }
 
     try {
-      await widgetStorage.remove(WIDGET_KEYS.VERSES);
+      await widgetStorage.remove(WIDGET_KEYS.AFFIRMATIONS);
       await widgetStorage.remove(WIDGET_KEYS.LAST_UPDATED);
-      await ExtensionStorage.reloadWidget('MimoAffirmationWidget');
+      await ExtensionStorage.reloadWidget('TitoVerseWidget');
       console.log('📱 Widget: Datos limpiados');
     } catch (error) {
       console.error('📱 Widget: Error al limpiar datos:', error);
@@ -268,6 +269,30 @@ class WidgetService {
       [array[i], array[j]] = [array[j], array[i]];
     }
     return array;
+  }
+
+  /**
+   * Sincroniza widgets en ambas plataformas
+   */
+  async syncAllPlatforms(): Promise<void> {
+    if (Platform.OS === 'ios') {
+      await this.syncAffirmationsToWidget();
+    } else if (Platform.OS === 'android') {
+      const { androidWidgetService } = await import('./android-widget.service');
+      await androidWidgetService.syncAffirmationsToWidget();
+    }
+  }
+
+  /**
+   * Recarga widgets en ambas plataformas
+   */
+  async reloadAllPlatforms(): Promise<void> {
+    if (Platform.OS === 'ios') {
+      await this.reloadWidget();
+    } else if (Platform.OS === 'android') {
+      const { androidWidgetService } = await import('./android-widget.service');
+      await androidWidgetService.reloadWidgets();
+    }
   }
 }
 

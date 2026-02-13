@@ -4,18 +4,31 @@
 
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { useEffect, useState, useCallback } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Platform, AppState as RNAppState } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import {
   useFonts,
-  Nunito_400Regular,
-  Nunito_500Medium,
-  Nunito_600SemiBold,
-  Nunito_700Bold
-} from '@expo-google-fonts/nunito';
+  DMSans_400Regular,
+  DMSans_500Medium,
+  DMSans_600SemiBold,
+  DMSans_700Bold
+} from '@expo-google-fonts/dm-sans';
 import * as Linking from 'expo-linking';
-import { storageService, revenueCatService, widgetService, deepLinkService, updatesService } from '@/services';
+import { storageService, revenueCatService, widgetService, deepLinkService, updatesService, affirmationSyncService, affirmationService } from '@/services';
 import { ThemeProvider } from '@/hooks';
+
+// Registrar Widget Task Handler para Android (DEBE ejecutarse antes de la app)
+if (Platform.OS === 'android') {
+  try {
+    const { registerWidgetTaskHandler } = require('react-native-android-widget');
+    const { widgetTaskHandler } = require('../android-widgets/widgetTaskHandler');
+
+    registerWidgetTaskHandler(widgetTaskHandler);
+    console.log('📱 Android Widget Task Handler registrado');
+  } catch (error) {
+    console.error('📱 Error registrando Widget Task Handler:', error);
+  }
+}
 
 // Mantener la splash screen visible mientras cargamos
 SplashScreen.preventAutoHideAsync();
@@ -43,10 +56,10 @@ export default function RootLayout() {
 
   // Cargar fuentes
   const [fontsLoaded] = useFonts({
-    Nunito_400Regular,
-    Nunito_500Medium,
-    Nunito_600SemiBold,
-    Nunito_700Bold
+    DMSans_400Regular,
+    DMSans_500Medium,
+    DMSans_600SemiBold,
+    DMSans_700Bold
   });
 
   // Inicializar deep link service después de que la app esté lista
@@ -65,6 +78,31 @@ export default function RootLayout() {
     }
   }, [appState.isReady, appState.onboardingCompleted]);
 
+  // Sincronizar afirmaciones al retomar la app (solo si completó onboarding)
+  useEffect(() => {
+    if (!appState.isReady || !appState.onboardingCompleted) return;
+
+    const subscription = RNAppState.addEventListener('change', async (nextAppState) => {
+      if (nextAppState === 'active') {
+        console.log('📱 App volvió al foreground, verificando sincronización...');
+        try {
+          const didSync = await affirmationSyncService.syncIfNeeded();
+          if (didSync) {
+            console.log('✅ Afirmaciones sincronizadas en foreground');
+            await affirmationService.reloadAffirmations();
+            await widgetService.syncAffirmationsToWidget();
+          }
+        } catch (error) {
+          console.error('⚠️ Error al sincronizar en foreground:', error);
+        }
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [appState.isReady, appState.onboardingCompleted]);
+
   // Inicializar app - solo lee de AsyncStorage
   useEffect(() => {
     async function init() {
@@ -79,36 +117,99 @@ export default function RootLayout() {
         // Obtener userId (genera uno si no existe)
         const userId = await revenueCatService.getOrCreateUserId();
 
-        // Leer datos del usuario
-        let userData = await storageService.getUserData();
-        
-        // Si no hay datos, inicializar (usuario nuevo)
-        if (!userData) {
-          console.log('👤 Usuario nuevo, inicializando datos...');
-          userData = await storageService.initializeUserData(userId);
+        // Leer datos del usuario con método seguro que distingue "sin datos" de "error"
+        const result = await storageService.getUserDataSafe();
+
+        if (result.error) {
+          // ⚠️ Storage falló temporalmente — NO reinicializar datos del usuario
+          // Esto previene sobreescribir datos existentes cuando AsyncStorage falla en iOS
+          console.warn('⚠️ Storage temporalmente no disponible, usando fallback...');
+          const completed = await resolveOnboardingFallback();
+          setAppState({ isReady: true, onboardingCompleted: completed, initialNavigationDone: false });
+          return;
         }
 
-        const completed = userData.onboardingCompleted;
+        if (!result.data) {
+          // No hay datos Y no hubo error → usuario genuinamente nuevo
+          console.log('👤 Usuario nuevo, inicializando datos...');
+          const userData = await storageService.initializeUserData(userId);
+          setAppState({ isReady: true, onboardingCompleted: userData.onboardingCompleted, initialNavigationDone: false });
+          return;
+        }
+
+        // Datos leídos correctamente
+        const completed = result.data.onboardingCompleted;
         console.log('✅ Estado de onboarding:', completed ? 'Completado' : 'Pendiente');
 
         // Sincronizar widget si ya completó onboarding
         if (completed) {
-          widgetService.syncVersesToWidget().catch(() => {});
+          widgetService.syncAffirmationsToWidget().catch(() => {});
+
+          // DEBUG: Mostrar estado del storage al iniciar
+          if (__DEV__) {
+            affirmationSyncService.debugStorageState().catch(() => {});
+            // DEBUG: Descomentar para forzar un sync limpio (útil para testing)
+            await affirmationSyncService.clearSyncTimestamp();
+          }
+
+          // Sincronizar afirmaciones desde backend (no bloqueante)
+          affirmationSyncService.syncIfNeeded()
+            .then(async (didSync) => {
+              if (didSync) {
+                console.log('✅ Afirmaciones sincronizadas desde backend');
+                // Recargar afirmaciones en AffirmationService
+                await affirmationService.reloadAffirmations();
+                // Actualizar widgets con nuevo contenido
+                await widgetService.syncAffirmationsToWidget();
+              }
+            })
+            .catch((error) => {
+              console.error('⚠️ Error al sincronizar afirmaciones:', error);
+              // No bloquear la app si falla la sincronización
+            });
         }
 
         setAppState({ isReady: true, onboardingCompleted: completed, initialNavigationDone: false });
       } catch (error) {
         console.error('❌ Error en inicialización:', error);
         
-        // Fallback: intentar solo leer estado de onboarding
+        // Fallback: usar cadena de respaldo sin sobreescribir datos
         try {
-          const completed = await storageService.isOnboardingCompleted();
+          const completed = await resolveOnboardingFallback();
           setAppState({ isReady: true, onboardingCompleted: completed, initialNavigationDone: false });
         } catch {
-          // Último recurso: asumir que no completó (mostrará onboarding)
-          setAppState({ isReady: true, onboardingCompleted: false, initialNavigationDone: false });
+          // Último recurso: asumir onboarding completado.
+          // Es preferible que un usuario nuevo vea la home (y pueda navegar)
+          // a que un usuario existente pierda su progreso y sea forzado al onboarding.
+          console.error('❌ Todos los intentos de lectura fallaron - asumiendo onboarding completado');
+          setAppState({ isReady: true, onboardingCompleted: true, initialNavigationDone: false });
         }
       }
+    }
+
+    /**
+     * Cadena de fallback para resolver el estado de onboarding sin sobreescribir datos.
+     * 1. Primero intenta el flag redundante de backup (key separada, más resistente)
+     * 2. Luego intenta leer del blob principal de USER_DATA
+     * 3. Si todo falla, asume false (usuario genuinamente nuevo)
+     */
+    async function resolveOnboardingFallback(): Promise<boolean> {
+      // Intento 1: Flag de backup redundante (key separada, más resistente a corrupción)
+      const backupCompleted = await storageService.isOnboardingCompletedBackup();
+      if (backupCompleted) {
+        console.log('✅ Flag de backup confirma onboarding completado');
+        return true;
+      }
+
+      // Intento 2: Leer del blob principal (puede funcionar en un segundo intento)
+      const completed = await storageService.isOnboardingCompleted();
+      if (completed) {
+        console.log('✅ Lectura secundaria confirma onboarding completado');
+        return true;
+      }
+
+      console.warn('⚠️ No se pudo confirmar estado de onboarding por ningún medio');
+      return false;
     }
 
     init();

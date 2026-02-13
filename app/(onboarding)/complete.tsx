@@ -19,7 +19,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { Spacing, BorderRadius, Typography, ThemeColors, BaseColors } from '@/constants/theme';
-import { storageService, revenueCatService } from '@/services';
+import { storageService, revenueCatService, widgetService } from '@/services';
 import { OnboardingContainer, AnimatedButton } from '@/components/onboarding';
 import { useTheme } from '@/hooks';
 
@@ -71,6 +71,14 @@ export default function CompleteScreen() {
       // Marcar onboarding como completado
       await storageService.completeOnboarding();
 
+      // Sincronizar widgets en ambas plataformas (iOS y Android)
+      try {
+        await widgetService.syncAllPlatforms();
+      } catch (error) {
+        console.error('Error al sincronizar widgets:', error);
+        // No bloquear el flujo si falla la sincronización de widgets
+      }
+
       // Navegar a la pantalla principal
       router.replace('/');
     } catch (error) {
@@ -92,9 +100,9 @@ export default function CompleteScreen() {
           </View>
         ) : (
           <AnimatedButton
-            title="Comenzar mi camino"
+            title="Comenzar mi viaje"
             onPress={handleGetStarted}
-            icon="✝️"
+            icon="✨"
           />
         )
       }
@@ -130,7 +138,7 @@ export default function CompleteScreen() {
         entering={FadeInDown.duration(400).delay(300)}
         style={styles.subtitle}
       >
-        Estás a punto de comenzar tu camino diario con la Palabra de Dios
+        Estás a punto de comenzar tu viaje de afirmaciones positivas con Tito
       </Animated.Text>
 
       {/* What's Next */}
@@ -143,21 +151,21 @@ export default function CompleteScreen() {
         <View style={styles.stepsList}>
           <StepItem
             number="1"
-            text="Recibí tu primer versículo del día"
+            text="Recibe tu primera afirmación del día"
             color={colors.primary}
             delay={500}
             colors={colors}
           />
           <StepItem
             number="2"
-            text="Construí tu racha diaria de lectura"
+            text="Comienza a construir tu racha diaria"
             color={colors.secondary}
             delay={600}
             colors={colors}
           />
           <StepItem
             number="3"
-            text="Guardá tus versículos favoritos"
+            text="Guarda tus afirmaciones favoritas"
             color={colors.tertiary}
             delay={700}
             colors={colors}
@@ -170,9 +178,9 @@ export default function CompleteScreen() {
         entering={FadeInUp.duration(400).delay(800)}
         style={styles.quoteContainer}
       >
-        <Text style={styles.quoteIcon}>📖</Text>
+        <Text style={styles.quoteIcon}>☁️</Text>
         <Text style={styles.quoteText}>
-          Lámpara es a mis pies tu palabra, y lumbrera a mi camino. — Salmos 119:105
+          Cada día es una nueva oportunidad para crecer y ser mejor
         </Text>
       </Animated.View>
     </OnboardingContainer>

@@ -2,7 +2,7 @@
 // Create Mix Screen - Crear mezcla personalizada
 // ============================================================================
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -20,12 +20,13 @@ import * as Haptics from 'expo-haptics';
 import { Spacing, Typography, BorderRadius } from '@/constants/theme';
 import { useColors } from '@/hooks';
 import { storageService, analytics } from '@/services';
-import { 
-  VERSE_CATEGORIES, 
+import {
   MIX_LIMITS,
-  type VerseCategory,
+  type AffirmationCategory,
   type UserCustomMix,
+  type CategoryConfig,
 } from '@/types';
+import { getAvailableCategories } from '@/services/category.service';
 
 // ============================================================================
 // Constants
@@ -33,8 +34,8 @@ import {
 
 const MIX_COLORS = [
   '#FF6B9D', // Rosa
-  '#5B7FCC', // Azul sereno
-  '#C9A96E', // Dorado
+  '#FF9A56', // Naranja
+  '#F97316', // Naranja oscuro
   '#8B5CF6', // Púrpura
   '#10B981', // Verde
   '#F59E0B', // Amarillo
@@ -66,7 +67,7 @@ const MIX_ICONS = [
 // ============================================================================
 
 interface CategorySelectorProps {
-  category: typeof VERSE_CATEGORIES[0];
+  category: CategoryConfig;
   isSelected: boolean;
   onToggle: () => void;
   index: number;
@@ -190,8 +191,14 @@ export default function CreateMixScreen() {
   const [name, setName] = useState('');
   const [selectedColor, setSelectedColor] = useState(MIX_COLORS[0]);
   const [selectedIcon, setSelectedIcon] = useState(MIX_ICONS[0]);
-  const [selectedCategories, setSelectedCategories] = useState<VerseCategory[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<AffirmationCategory[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [allCategories, setAllCategories] = useState<CategoryConfig[]>([]);
+
+  // Cargar categorías dinámicas
+  useEffect(() => {
+    getAvailableCategories().then(setAllCategories);
+  }, []);
 
   // Validación
   const isValid = useMemo(() => {
@@ -203,7 +210,7 @@ export default function CreateMixScreen() {
     router.back();
   };
 
-  const toggleCategory = useCallback((categoryId: VerseCategory) => {
+  const toggleCategory = useCallback((categoryId: AffirmationCategory) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSelectedCategories(prev => {
       if (prev.includes(categoryId)) {
@@ -361,7 +368,7 @@ export default function CreateMixScreen() {
         </Animated.View>
 
         <View style={styles.categoriesList}>
-          {VERSE_CATEGORIES.map((category, index) => (
+          {allCategories.map((category, index) => (
             <CategorySelector
               key={category.id}
               category={category}

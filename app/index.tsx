@@ -1,5 +1,5 @@
 // ============================================================================
-// Home Screen - Versículos Full Screen con swipe vertical
+// Home Screen - Afirmaciones Full Screen con swipe vertical
 // ============================================================================
 
 import { useCallback, useEffect, useState, useRef, useMemo } from 'react';
@@ -32,11 +32,13 @@ import { FontAwesome } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Spacing, Typography } from '@/constants/theme';
 import { useTheme, useColors } from '@/hooks';
-import { storageService, verseService, useVerseAudio, revenueCatService, deepLinkService, analytics, notificationService } from '@/services';
+import { storageService, affirmationService, useAffirmationAudio, revenueCatService, deepLinkService, analytics, notificationService } from '@/services';
 import { AppBackground, getTextColorForBackground } from '@/components/AppBackground';
 import { StreakCelebration } from '@/components/StreakCelebration';
-import type { Verse, AppBackgroundType, ActiveMixReference, VerseCategory, UserCustomMix, StreakData } from '@/types';
-import { VERSE_CATEGORIES, MIX_LIMITS, AUDIO_LIMITS } from '@/types';
+import { VerseExplanationModal } from '@/components/VerseExplanationModal';
+import type { Affirmation, AppBackgroundType, ActiveMixReference, AffirmationCategory, UserCustomMix, StreakData } from '@/types';
+import { MIX_LIMITS, AUDIO_LIMITS } from '@/types';
+import { getAvailableCategories } from '@/services/category.service';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -47,7 +49,7 @@ export default function HomeScreen() {
   const colors = useColors();
 
   // Estado
-  const [affirmations, setAffirmations] = useState<Verse[]>([]);
+  const [affirmations, setAffirmations] = useState<Affirmation[]>([]);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -57,17 +59,17 @@ export default function HomeScreen() {
   const [streakData, setStreakData] = useState<StreakData | null>(null);
 
   // Ref para el FlatList
-  const flatListRef = useRef<Animated.FlatList<Verse>>(null);
+  const flatListRef = useRef<Animated.FlatList<Affirmation>>(null);
   
-  // Ref para trackear si ya se cargaron los versículos inicialmente
+  // Ref para trackear si ya se cargaron las afirmaciones inicialmente
   const hasLoadedInitially = useRef(false);
   // Ref para el mix activo actual (para detectar cambios)
   const currentMixRef = useRef<string | null>(null);
-  // Ref para el ID de versículo del deep link
+  // Ref para el ID de afirmación del deep link
   const pendingDeepLinkAffirmationId = useRef<string | null>(null);
 
-  // Hook de audio
-  const { isPlaying, currentAudioUrl, togglePlay, stop } = useVerseAudio();
+  // Hook de audio para reproducir afirmaciones
+  const { isPlaying, currentAudioUrl, togglePlay, stop } = useAffirmationAudio();
 
   // Color de texto según el fondo
   const textColor = useMemo(
@@ -75,8 +77,8 @@ export default function HomeScreen() {
     [userBackground, isDark]
   );
 
-  // Ref para acceder a los versículos actuales desde el handler
-  const affirmationsRef = useRef<Verse[]>([]);
+  // Ref para acceder a las afirmaciones actuales desde el handler
+  const affirmationsRef = useRef<Affirmation[]>([]);
 
   // Mantener el ref actualizado
   useEffect(() => {
@@ -86,25 +88,26 @@ export default function HomeScreen() {
   // Manejar deep links (widget y notificaciones)
   useEffect(() => {
     // Verificar si hay un deep link pendiente al montar
-    const pendingId = deepLinkService.getPendingVerseId();
+    const pendingId = deepLinkService.getPendingAffirmationId();
     if (pendingId) {
       console.log('📱 HomeScreen: Deep link pendiente encontrado:', pendingId);
       pendingDeepLinkAffirmationId.current = pendingId;
-      deepLinkService.clearPendingVerseId();
+      deepLinkService.clearPendingAffirmationId();
     }
 
     // Registrar handler para deep links futuros
     const handleDeepLink = (affirmationId: string) => {
       console.log('📱 Procesando deep link en HomeScreen:', affirmationId);
-      console.log('📱 Versículos actuales:', affirmationsRef.current.length);
+      console.log('📱 Afirmaciones actuales:', affirmationsRef.current.length);
 
-      // Si ya tenemos versículos, reordenar para mostrar este primero
+      // Si ya tenemos afirmaciones, reordenar para mostrar esta primero
       if (affirmationsRef.current.length > 0) {
         const currentAffirmations = affirmationsRef.current;
         const affirmationIndex = currentAffirmations.findIndex(a => a.id === affirmationId);
 
         if (affirmationIndex !== -1) {
-          console.log('📱 Versículo encontrado en índice:', affirmationIndex);
+          console.log('📱 Afirmación encontrada en índice:', affirmationIndex);
+          // Mover al inicio del array
           const reordered = [...currentAffirmations];
           const [targetAffirmation] = reordered.splice(affirmationIndex, 1);
           reordered.unshift(targetAffirmation);
@@ -112,12 +115,12 @@ export default function HomeScreen() {
           setCurrentIndex(0);
           flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
         } else {
-          console.log('📱 Versículo no encontrado en el array actual, guardando como pendiente');
+          console.log('📱 Afirmación no encontrada en el array actual, guardando como pendiente');
           pendingDeepLinkAffirmationId.current = affirmationId;
         }
       } else {
-        // Guardar para procesar cuando se carguen los versículos
-        console.log('📱 No hay versículos cargados, guardando como pendiente');
+        // Guardar para procesar cuando se carguen las afirmaciones
+        console.log('📱 No hay afirmaciones cargadas, guardando como pendiente');
         pendingDeepLinkAffirmationId.current = affirmationId;
       }
     };
@@ -129,19 +132,22 @@ export default function HomeScreen() {
     };
   }, []); // Sin dependencias - solo se ejecuta al montar
 
-  // Función para cargar versículos según el mix activo
+  // Función para cargar afirmaciones según el mix activo
   const loadAffirmationsForMix = async (
     activeMix: ActiveMixReference | null,
-    defaultCategories: VerseCategory[],
+    defaultCategories: AffirmationCategory[],
     userFavorites: { id: string; text: string; category: string }[],
     isPremiumUser: boolean
-  ): Promise<Verse[]> => {
+  ): Promise<Affirmation[]> => {
+    // Cargar categorías disponibles dinámicamente
+    const allCategories = await getAvailableCategories();
+
     // Helper para filtrar categorías según acceso premium
-    const filterCategoriesByAccess = (categories: VerseCategory[]): VerseCategory[] => {
+    const filterCategoriesByAccess = (categories: AffirmationCategory[]): AffirmationCategory[] => {
       if (isPremiumUser) return categories;
       // Si no es premium, solo incluir categorías gratuitas
       return categories.filter(catId => {
-        const catConfig = VERSE_CATEGORIES.find(c => c.id === catId);
+        const catConfig = allCategories.find(c => c.id === catId);
         return catConfig && !catConfig.isPremium;
       });
     };
@@ -149,31 +155,31 @@ export default function HomeScreen() {
     // Si no hay mix activo, usar el mix personalizado (categorías del onboarding)
     if (!activeMix) {
       const accessibleCategories = filterCategoriesByAccess(defaultCategories);
-      return verseService.getVersesByCategories(accessibleCategories);
+      return await affirmationService.getAffirmationsByCategories(accessibleCategories);
     }
 
     switch (activeMix.mixType) {
       case 'personalized': {
         // Mix del onboarding - filtra según acceso premium
         const accessibleCategories = filterCategoriesByAccess(defaultCategories);
-        return verseService.getVersesByCategories(accessibleCategories);
+        return await affirmationService.getAffirmationsByCategories(accessibleCategories);
       }
 
       case 'category': {
         // Mix de una sola categoría - extraer categoryId del mixId
-        const categoryId = activeMix.mixId.replace('category-', '') as VerseCategory;
+        const categoryId = activeMix.mixId.replace('category-', '') as AffirmationCategory;
         // Verificar si tiene acceso a esta categoría
-        const catConfig = VERSE_CATEGORIES.find(c => c.id === categoryId);
+        const catConfig = allCategories.find(c => c.id === categoryId);
         if (catConfig?.isPremium && !isPremiumUser) {
           // No tiene acceso, usar categorías por defecto filtradas
           const accessibleCategories = filterCategoriesByAccess(defaultCategories);
-          return verseService.getVersesByCategories(accessibleCategories);
+          return await affirmationService.getAffirmationsByCategories(accessibleCategories);
         }
-        return verseService.getVersesByCategory(categoryId);
+        return await affirmationService.getAffirmationsByCategory(categoryId);
       }
 
       case 'favorites': {
-        // Mix de favoritos - convertir favoritos a formato Verse
+        // Mix de favoritos - convertir favoritos a formato Affirmation
         return userFavorites.map((fav) => ({
           id: fav.id,
           text: fav.text,
@@ -185,7 +191,7 @@ export default function HomeScreen() {
       case 'custom_phrases': {
         // Mix de frases propias
         if (!isPremiumUser) {
-          return verseService.getVersesByCategories(defaultCategories);
+          return await affirmationService.getAffirmationsByCategories(defaultCategories);
         }
         const customPhrases = await storageService.getCustomPhrases();
         return customPhrases.map((phrase) => ({
@@ -200,20 +206,20 @@ export default function HomeScreen() {
         // Mix custom del usuario - obtener categorías del mix guardado
         if (!isPremiumUser) {
           const accessibleCategories = filterCategoriesByAccess(defaultCategories);
-          return verseService.getVersesByCategories(accessibleCategories);
+          return await affirmationService.getAffirmationsByCategories(accessibleCategories);
         }
         const userMixes = await storageService.getUserCustomMixes();
         const userMix = userMixes.find((m: UserCustomMix) => m.id === activeMix.mixId);
         if (userMix && userMix.categories.length > 0) {
           // Premium users tienen acceso a todas las categorías de su mix custom
-          return verseService.getVersesByCategories(userMix.categories);
+          return await affirmationService.getAffirmationsByCategories(userMix.categories);
         }
-        return verseService.getVersesByCategories(defaultCategories);
+        return await affirmationService.getAffirmationsByCategories(defaultCategories);
       }
 
       default: {
         const accessibleCategories = filterCategoriesByAccess(defaultCategories);
-        return verseService.getVersesByCategories(accessibleCategories);
+        return await affirmationService.getAffirmationsByCategories(accessibleCategories);
       }
     }
   };
@@ -297,7 +303,7 @@ export default function HomeScreen() {
           const activeMix = await storageService.getActiveMix();
           const activeMixId = activeMix ? `${activeMix.mixType}-${activeMix.mixId}` : 'personalized';
           
-          // Solo recargar versículos si:
+          // Solo recargar afirmaciones si:
           // 1. Es la primera carga (hasLoadedInitially es false)
           // 2. El mix cambió desde la última carga
           const shouldReloadAffirmations = !hasLoadedInitially.current || currentMixRef.current !== activeMixId;
@@ -305,22 +311,22 @@ export default function HomeScreen() {
           if (shouldReloadAffirmations) {
             setIsLoading(true);
             
-            // Cargar versículos según el mix activo
+            // Cargar afirmaciones según el mix activo
             const loadedAffirmations = await loadAffirmationsForMix(
               activeMix,
-              profile.assignedCategories || ['faith', 'strength', 'love'],
+              profile.assignedCategories || ['self_love', 'motivation', 'positivity'],
               userFavorites,
               hasSubscription
             );
             
             let shuffled = shuffleArray([...loadedAffirmations]);
             
-            // Si hay un deep link pendiente, mover ese versículo al inicio
+            // Si hay un deep link pendiente, mover esa afirmación al inicio
             if (pendingDeepLinkAffirmationId.current) {
               const deepLinkId = pendingDeepLinkAffirmationId.current;
               const affirmationIndex = shuffled.findIndex(a => a.id === deepLinkId);
               if (affirmationIndex !== -1) {
-                console.log('📱 Mostrando versículo del deep link primero:', deepLinkId);
+                console.log('📱 Mostrando afirmación del deep link primero:', deepLinkId);
                 const [targetAffirmation] = shuffled.splice(affirmationIndex, 1);
                 shuffled.unshift(targetAffirmation);
               }
@@ -329,7 +335,7 @@ export default function HomeScreen() {
             
             setAffirmations(shuffled);
             
-            // Resetear al primer slide cuando cambian los versículos
+            // Resetear al primer slide cuando cambian las afirmaciones
             setCurrentIndex(0);
             flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
             
@@ -350,7 +356,7 @@ export default function HomeScreen() {
   );
 
   // Toggle favorito
-  const handleToggleFavorite = useCallback(async (affirmation: Verse) => {
+  const handleToggleFavorite = useCallback(async (affirmation: Affirmation) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const isFavorite = favorites.has(affirmation.id);
 
@@ -363,38 +369,36 @@ export default function HomeScreen() {
       });
       
       // Track unfavorite
-      const unfavoriteCategory = verseService.getCategoryForVerse(affirmation.id);
-      analytics.track('verse_unfavorited', {
-        verse_id: affirmation.id,
+      const unfavoriteCategory = await affirmationService.getCategoryForAffirmation(affirmation.id);
+      analytics.track('affirmation_unfavorited', {
+        affirmation_id: affirmation.id,
         category: unfavoriteCategory || 'custom',
       });
     } else {
-      const favoriteCategory = verseService.getCategoryForVerse(affirmation.id);
+      const favoriteCategory = await affirmationService.getCategoryForAffirmation(affirmation.id);
       await storageService.addFavorite({
         id: affirmation.id,
-        text: affirmation.text,
-        reference: affirmation.reference || '',
+        text: affirmation.title || affirmation.text,
         category: favoriteCategory || 'custom',
       });
       setFavorites((prev) => new Set(prev).add(affirmation.id));
       
       // Track favorite
-      analytics.track('verse_favorited', {
-        verse_id: affirmation.id,
+      analytics.track('affirmation_favorited', {
+        affirmation_id: affirmation.id,
         category: favoriteCategory || 'custom',
       });
     }
   }, [favorites]);
 
-  // Compartir versículo
-  const handleShare = useCallback((affirmation: Verse) => {
+  // Compartir afirmación
+  const handleShare = useCallback(async (affirmation: Affirmation) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    const shareCategory = verseService.getCategoryForVerse(affirmation.id);
+    const shareCategory = await affirmationService.getCategoryForAffirmation(affirmation.id);
     router.push({
       pathname: '/share',
       params: {
-        text: affirmation.text,
-        reference: affirmation.reference || '',
+        text: affirmation.title || affirmation.text,
         backgroundType: userBackground,
         affirmationId: affirmation.id,
         category: shareCategory || 'custom',
@@ -403,7 +407,7 @@ export default function HomeScreen() {
   }, [router, userBackground]);
 
   // Play audio
-  const handlePlayAudio = useCallback(async (affirmation: Verse) => {
+  const handlePlayAudio = useCallback(async (affirmation: Affirmation) => {
     if (!affirmation.audioSource) return;
 
     // Si es premium, reproducir sin restricciones
@@ -412,16 +416,16 @@ export default function HomeScreen() {
       togglePlay(affirmation.audioSource);
       
       // Track audio played
-      const audioCategory = verseService.getCategoryForVerse(affirmation.id);
-      analytics.track('verse_audio_played', {
-        verse_id: affirmation.id,
+      const audioCategory = await affirmationService.getCategoryForAffirmation(affirmation.id);
+      analytics.track('affirmation_audio_played', {
+        affirmation_id: affirmation.id,
         category: audioCategory || 'custom',
         is_premium: true,
       });
       return;
     }
 
-    // Verificar si ya reprodujo este versículo antes
+    // Verificar si ya reprodujo esta afirmación antes
     const alreadyPlayed = await storageService.hasPlayedAffirmation(affirmation.id);
     
     if (alreadyPlayed) {
@@ -430,9 +434,9 @@ export default function HomeScreen() {
       togglePlay(affirmation.audioSource);
       
       // Track audio played
-      const alreadyPlayedCategory = verseService.getCategoryForVerse(affirmation.id);
-      analytics.track('verse_audio_played', {
-        verse_id: affirmation.id,
+      const alreadyPlayedCategory = await affirmationService.getCategoryForAffirmation(affirmation.id);
+      analytics.track('affirmation_audio_played', {
+        affirmation_id: affirmation.id,
         category: alreadyPlayedCategory || 'custom',
         is_premium: false,
       });
@@ -469,9 +473,9 @@ export default function HomeScreen() {
     togglePlay(affirmation.audioSource);
     
     // Track audio played
-    const newPlayCategory = verseService.getCategoryForVerse(affirmation.id);
-    analytics.track('verse_audio_played', {
-      verse_id: affirmation.id,
+    const newPlayCategory = await affirmationService.getCategoryForAffirmation(affirmation.id);
+    analytics.track('affirmation_audio_played', {
+      affirmation_id: affirmation.id,
       category: newPlayCategory || 'custom',
       is_premium: false,
     });
@@ -485,16 +489,16 @@ export default function HomeScreen() {
   }, [currentIndex]);
 
   // Callback cuando cambia el item visible
-  const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+  const onViewableItemsChanged = useRef(async ({ viewableItems }: { viewableItems: ViewToken[] }) => {
     if (viewableItems.length > 0 && viewableItems[0].index !== null) {
       setCurrentIndex(viewableItems[0].index);
-      
-      // Track verse viewed
-      const viewedItem = viewableItems[0].item as Verse;
+
+      // Track affirmation viewed
+      const viewedItem = viewableItems[0].item as Affirmation;
       if (viewedItem) {
-        const viewedCategory = verseService.getCategoryForVerse(viewedItem.id);
-        analytics.track('verse_viewed', {
-          verse_id: viewedItem.id,
+        const viewedCategory = await affirmationService.getCategoryForAffirmation(viewedItem.id);
+        analytics.track('affirmation_viewed', {
+          affirmation_id: viewedItem.id,
           category: viewedCategory || 'custom',
           index: viewableItems[0].index,
         });
@@ -506,7 +510,7 @@ export default function HomeScreen() {
     itemVisiblePercentThreshold: 50,
   }).current;
 
-  // Render de cada versículo
+  // Render de cada afirmación
   const renderItem = useCallback(
     ({ item, index }: { item: Affirmation; index: number }) => (
       <AffirmationSlide
@@ -588,7 +592,7 @@ export default function HomeScreen() {
         }}
       />
 
-      {/* Indicador de swipe (solo en el primer versículo) */}
+      {/* Indicador de swipe (solo en la primera afirmación) */}
       {currentIndex === 0 && (
         <SwipeHint textColor={textColor} bottom={insets.bottom + 40} />
       )}
@@ -759,7 +763,7 @@ function FavoritesProgress({ current, required, top, onPress }: FavoritesProgres
 }
 
 // ============================================================================
-// AffirmationSlide - Componente de cada slide de versículo
+// AffirmationSlide - Componente de cada slide de afirmación
 // ============================================================================
 
 interface AffirmationSlideProps {
@@ -786,7 +790,8 @@ function AffirmationSlide({
   isActive,
 }: AffirmationSlideProps) {
   const colors = useColors();
-  
+  const [showExplanation, setShowExplanation] = useState(false);
+
   // Animación del corazón
   const heartScale = useSharedValue(1);
 
@@ -798,9 +803,22 @@ function AffirmationSlide({
     onToggleFavorite();
   };
 
+  const handleOpenExplanation = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    analytics.track('affirmation_explanation_viewed', {
+      affirmation_id: affirmation.id,
+    });
+    setShowExplanation(true);
+  };
+
   const heartAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: heartScale.value }],
   }));
+
+  // Separar el título del versículo y la referencia bíblica
+  const titleParts = (affirmation.title || affirmation.text).split(' — ');
+  const mainText = titleParts[0];
+  const bibleReference = titleParts.length > 1 ? titleParts[1] : null;
 
   return (
     <View style={styles.slideContainer}>
@@ -811,21 +829,20 @@ function AffirmationSlide({
           entering={isActive ? FadeIn.delay(200).duration(500) : undefined}
           style={[styles.affirmationText, { color: textColor }]}
         >
-          {affirmation.text}
+          {mainText}
         </Animated.Text>
-
         {/* Referencia bíblica */}
-        {affirmation.reference && (
+        {bibleReference && (
           <Animated.Text
-            entering={isActive ? FadeIn.delay(400).duration(400) : undefined}
-            style={[styles.referenceText, { color: textColor }]}
+            entering={isActive ? FadeIn.delay(400).duration(500) : undefined}
+            style={[styles.bibleReferenceText, { color: textColor }]}
           >
-            — {affirmation.reference}
+            {bibleReference}
           </Animated.Text>
         )}
       </View>
 
-      {/* Botones de acción - debajo del versículo */}
+      {/* Botones de acción - debajo de la afirmación */}
       <View style={styles.actionsContainer}>
         {/* Botón de audio (si tiene) */}
         {affirmation.audioSource && (
@@ -854,6 +871,40 @@ function AffirmationSlide({
           color={textColor}
         />
       </View>
+
+      {/* Botón Profundiza - debajo de las acciones */}
+      {affirmation.title && affirmation.text && (
+        <Animated.View entering={isActive ? FadeIn.delay(600).duration(500) : undefined}>
+          <Pressable
+            style={[styles.profundizaButton, {
+              backgroundColor: (textColor === '#FFFFFF' || textColor === '#F9FAFB' || textColor.toLowerCase().startsWith('#f'))
+                ? 'rgba(0, 0, 0, 0.25)'
+                : 'rgba(255, 255, 255, 0.7)',
+            }]}
+            onPress={handleOpenExplanation}
+          >
+            <FontAwesome name="book" size={14} color={textColor} />
+            <Text style={[styles.profundizaText, { color: textColor }]}>
+              Profundiza
+            </Text>
+          </Pressable>
+        </Animated.View>
+      )}
+
+      {/* Modal de explicación del versículo */}
+      {affirmation.title && affirmation.text && (
+        <VerseExplanationModal
+          visible={showExplanation}
+          onClose={() => setShowExplanation(false)}
+          affirmation={affirmation}
+          isPlayingAudio={isPlayingAudio}
+          onPlayAudio={onPlayAudio}
+          onShare={() => {
+            setShowExplanation(false);
+            onShare();
+          }}
+        />
+      )}
     </View>
   );
 }
@@ -939,7 +990,7 @@ function SwipeHint({ textColor, bottom }: SwipeHintProps) {
         <FontAwesome name="chevron-up" size={20} color={textColor} style={{ opacity: 0.6 }} />
       </Animated.View>
       <Text style={[styles.swipeHintText, { color: textColor }]}>
-        Deslizá para otro versículo
+        Deslizá para más
       </Text>
     </Animated.View>
   );
@@ -985,14 +1036,14 @@ const styles = StyleSheet.create({
     lineHeight: 40,
     fontFamily: Typography.fontFamily.heading,
   },
-  referenceText: {
-    fontSize: Typography.fontSize.body,
-    fontWeight: Typography.fontWeight.medium,
-    textAlign: 'center',
-    marginTop: Spacing.l,
-    opacity: 0.7,
+  bibleReferenceText: {
+    fontSize: 16,
     fontStyle: 'italic',
+    textAlign: 'center',
+    lineHeight: 22,
     fontFamily: Typography.fontFamily.body,
+    opacity: 0.6,
+    marginTop: Spacing.m,
   },
   actionsContainer: {
     flexDirection: 'row',
@@ -1000,6 +1051,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: Spacing.xxxl,
+  },
+  profundizaButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.s,
+    paddingVertical: Spacing.s,
+    paddingHorizontal: Spacing.l,
+    borderRadius: 20,
+    marginTop: Spacing.l,
+  },
+  profundizaText: {
+    fontSize: Typography.fontSize.caption,
+    fontWeight: Typography.fontWeight.semibold,
+    fontFamily: Typography.fontFamily.heading,
   },
   actionButton: {
     width: 48,

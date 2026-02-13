@@ -189,15 +189,10 @@ class AnalyticsService {
   }
 
   /**
-   * Trackea visualización de versículo
+   * Trackea visualización de afirmación
    */
-  trackVerseViewed(verseId: string, category: string): void {
-    this.track('verse_viewed', { verse_id: verseId, category });
-  }
-
-  /** @deprecated Usar trackVerseViewed */
   trackAffirmationViewed(affirmationId: string, category: string): void {
-    this.trackVerseViewed(affirmationId, category);
+    this.track('affirmation_viewed', { affirmation_id: affirmationId, category });
   }
 
   /**

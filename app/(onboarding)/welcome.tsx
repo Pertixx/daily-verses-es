@@ -4,6 +4,7 @@
 
 import { View, StyleSheet, Dimensions } from 'react-native';
 import { router } from 'expo-router';
+import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   FadeInDown,
@@ -67,14 +68,18 @@ export default function WelcomeScreen() {
 
       {/* Content */}
       <View style={[styles.content, { paddingTop: insets.top + Spacing.xxl }]}>
-        {/* Nubi Image */}
+        {/* Tito Image */}
         <View style={styles.heroContainer}>
           <Animated.View
             entering={ZoomIn.duration(800).springify()}
             style={floatingStyle}
           >
             <View style={styles.imageGlow} />
-            <Text style={styles.heroEmoji}>✝️</Text>
+            <Image
+              source={require('@/assets/icons/titoGreetings.png')}
+              style={styles.heroImage}
+              contentFit="contain"
+            />
           </Animated.View>
         </View>
 
@@ -84,14 +89,14 @@ export default function WelcomeScreen() {
             entering={FadeInUp.duration(600).delay(300)}
             style={styles.greeting}
           >
-            Tu versículo diario te espera
+            ¡Hola, soy Tito!
           </Animated.Text>
 
           <Animated.Text
             entering={FadeInUp.duration(600).delay(450)}
             style={styles.description}
           >
-            Comienza cada día con la Palabra de Dios. Versículos que fortalecen tu fe y llenan tu corazón de esperanza.
+            Estoy aquí para acompañarte cada día con versículos diarios que te ayudarán a sentirte mejor contigo mismo.
           </Animated.Text>
         </View>
       </View>
@@ -189,9 +194,9 @@ const createStyles = (colors: ThemeColors, isDark: boolean) =>
       top: -15,
       left: -15,
     },
-    heroEmoji: {
-      fontSize: 120,
-      textAlign: 'center',
+    heroImage: {
+      width: 250,
+      height: 250,
     },
     textContainer: {
       alignItems: 'center',

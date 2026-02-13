@@ -4,25 +4,27 @@
 
 export const STORAGE_KEYS = {
   /** Datos completos del usuario */
-  USER_DATA: '@nubi_user_data',
+  USER_DATA: '@tito_user_data',
   /** Solo el ID del usuario */
-  USER_ID: '@nubi_user_id',
+  USER_ID: '@tito_user_id',
   /** Estado del onboarding */
-  ONBOARDING_STATE: '@nubi_onboarding_state',
+  ONBOARDING_STATE: '@tito_onboarding_state',
   /** Tema seleccionado */
-  THEME: '@nubi_theme',
+  THEME: '@tito_theme',
   /** Configuración de notificaciones */
-  NOTIFICATION_SETTINGS: '@nubi_notification_settings',
+  NOTIFICATION_SETTINGS: '@tito_notification_settings',
   /** Datos de racha */
-  STREAK_DATA: '@nubi_streak_data',
+  STREAK_DATA: '@tito_streak_data',
   /** Versículos favoritos */
-  FAVORITES: '@nubi_favorites',
+  FAVORITES: '@tito_favorites',
   /** Frases personalizadas del usuario */
-  CUSTOM_PHRASES: '@nubi_custom_phrases',
+  CUSTOM_PHRASES: '@tito_custom_phrases',
   /** Mixes custom creados por el usuario */
-  USER_CUSTOM_MIXES: '@nubi_user_custom_mixes',
+  USER_CUSTOM_MIXES: '@tito_user_custom_mixes',
   /** Mix activo */
-  ACTIVE_MIX: '@nubi_active_mix',
+  ACTIVE_MIX: '@tito_active_mix',
   /** IDs de versículos reproducidos por audio (para límite de usuarios no premium) */
-  AUDIO_PLAYED_AFFIRMATIONS: '@nubi_audio_played_affirmations',
+  AUDIO_PLAYED_AFFIRMATIONS: '@tito_audio_played',
+  /** Flag redundante de onboarding completado (protección contra pérdida de datos) */
+  ONBOARDING_COMPLETED_BACKUP: '@tito_onboarding_done',
 } as const;

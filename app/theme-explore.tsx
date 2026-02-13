@@ -3,7 +3,7 @@
 // ============================================================================
 
 import { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, Alert, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
@@ -122,12 +122,16 @@ export default function ThemeExploreScreen() {
         <View style={styles.headerSpacer} />
       </Animated.View>
 
-      {/* Decorative icon */}
+      {/* Tito Image */}
       <Animated.View
         entering={FadeInDown.delay(50).duration(300)}
-        style={styles.mimoContainer}
+        style={styles.titoContainer}
       >
-        <Text style={styles.decorativeEmoji}>✞️</Text>
+        <Image
+          source={require('@/assets/icons/tito.png')}
+          style={styles.titoImage}
+          resizeMode="contain"
+        />
       </Animated.View>
 
       {/* Premium Banner (si no es premium) */}
@@ -229,14 +233,14 @@ export default function ThemeExploreScreen() {
               Fondo de pantalla
             </Text>
             <Text style={[styles.sectionDescription, { color: colors.textSecondary }]}>
-              Elegí el fondo para tus versículos
+              Elegí el fondo para tus afirmaciones
             </Text>
             
             <View style={styles.selectorContainer}>
               <AppBackgroundSelector
                 selectedBackground={selectedBackground}
                 onSelectBackground={handleSelectBackground}
-                showPremiumBadge={!isPremium}
+                showPremiumBadge={false}
               />
             </View>
           </Animated.View>
@@ -249,7 +253,7 @@ export default function ThemeExploreScreen() {
               Ícono de la app
             </Text>
             <Text style={[styles.sectionDescription, { color: colors.textSecondary }]}>
-              Cambiá el ícono de Versículo en tu pantalla
+              Cambiá el ícono de Tito en tu pantalla
             </Text>
             
             <View style={styles.selectorContainer}>
@@ -296,12 +300,13 @@ const styles = StyleSheet.create({
   headerSpacer: {
     width: 36,
   },
-  mimoContainer: {
+  titoContainer: {
     alignItems: 'center',
     marginBottom: Spacing.m,
   },
-  decorativeEmoji: {
-    fontSize: 80,
+  titoImage: {
+    width: 150,
+    height: 150,
   },
   bannerContainer: {
     paddingHorizontal: Spacing.l,

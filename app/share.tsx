@@ -1,5 +1,5 @@
 // ============================================================================
-// Share Screen - Pantalla para compartir versículos
+// Share Screen - Pantalla para compartir afirmaciones
 // ============================================================================
 
 import { useRef, useCallback, useState } from 'react';
@@ -8,6 +8,8 @@ import {
   Text,
   StyleSheet,
   Pressable,
+  Share,
+  Platform,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -29,6 +31,69 @@ import { Spacing, BorderRadius, Typography } from '@/constants/theme';
 import type { AppBackgroundType } from '@/types';
 import { APP_BACKGROUNDS } from '@/components/AppBackgroundSelector';
 
+// ============================================================================
+// Tito Outfit Variants - Variantes de outfit de Tito
+// ============================================================================
+
+type TitoOutfitId = 'default' | 'greetings' | 'stamp' | 'sleeps' | 'peeking' | 'hidden';
+
+interface TitoOutfitStyle {
+  width: number;
+  height: number;
+  // Offsets como porcentaje del tamaño de la imagen (0 = borde, -0.2 = 20% fuera, 0.1 = 10% adentro)
+  bottomOffset: number;
+  leftOffset?: number;
+  rightOffset?: number;
+}
+
+interface TitoOutfit {
+  id: TitoOutfitId;
+  source: any; // require() image source
+  label: string;
+  style: TitoOutfitStyle;
+}
+
+// Configuración de variantes de Tito - agregar más aquí fácilmente
+// Cada outfit tiene su propia configuración de tamaño y posición
+// Los offsets son porcentajes del tamaño de la imagen (ej: -0.2 = 20% fuera del borde)
+const TITO_OUTFITS: TitoOutfit[] = [
+  {
+    id: 'default',
+    source: require('@/assets/icons/tito.png'),
+    label: 'Tito',
+    style: { width: 150, height: 150, bottomOffset: -0.1, leftOffset: -0.13 },
+  },
+  {
+    id: 'greetings',
+    source: require('@/assets/icons/titoGreetings.png'),
+    label: 'Saludo',
+    style: { width: 150, height: 150, bottomOffset: -0.1, leftOffset: -0.13 },
+  },
+  {
+    id: 'stamp',
+    source: require('@/assets/icons/titoPraying.png'),
+    label: 'Sello',
+    style: { width: 150, height: 150, bottomOffset: -0.1, leftOffset: -0.13 },
+  },
+  {
+    id: 'sleeps',
+    source: require('@/assets/icons/titoSleeping.png'),
+    label: 'Duerme',
+    style: { width: 150, height: 150, bottomOffset: -0.1, leftOffset: -0.13 },
+  },
+  {
+    id: 'peeking',
+    source: require('@/assets/icons/titoPeeking.png'),
+    label: 'Asomándose',
+    style: { width: 150, height: 150, bottomOffset: -0.1, leftOffset: -0.4 },
+  },
+];
+
+// Estado "hidden" no tiene imagen, es el último estado del ciclo
+const TITO_STATES: TitoOutfitId[] = [...TITO_OUTFITS.map(o => o.id), 'hidden'];
+
+const TITO_DOWNLOAD_URL = 'https://mimoafirmacionesdiarias.com/download';
+
 export default function ShareScreen() {
   const router = useRouter();
   const colors = useColors();
@@ -37,25 +102,34 @@ export default function ShareScreen() {
   // Obtener parámetros de la URL
   const params = useLocalSearchParams<{
     text: string;
-    reference: string;
     backgroundType: string;
     affirmationId: string;
     category: string;
   }>();
 
-  const verseText = params.text || '';
-  const verseReference = params.reference || '';
+  const affirmationText = params.text || '';
   const backgroundType = (params.backgroundType || 'default') as AppBackgroundType;
-  const verseId = params.affirmationId || '';
-  const verseCategory = params.category || 'custom';
+
+  // Separar el título del versículo y la referencia bíblica
+  const titleParts = affirmationText.split(' — ');
+  const mainText = titleParts[0];
+  const bibleReference = titleParts.length > 1 ? titleParts[1] : null;
+  const affirmationId = params.affirmationId || '';
+  const affirmationCategory = params.category || 'custom';
 
   const [isSharing, setIsSharing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showCopiedFeedback, setShowCopiedFeedback] = useState(false);
   const [showSavedFeedback, setShowSavedFeedback] = useState(false);
+  const [currentTitoIndex, setCurrentTitoIndex] = useState(0); // Índice en TITO_STATES
 
   // Ref para capturar la imagen
   const cardRef = useRef<View>(null);
+
+  // Obtener el estado actual de Tito
+  const currentTitoState = TITO_STATES[currentTitoIndex];
+  const currentTitoOutfit = TITO_OUTFITS.find(o => o.id === currentTitoState);
+  const isTitoVisible = currentTitoState !== 'hidden';
 
   // Cerrar pantalla
   const handleClose = useCallback(() => {
@@ -63,16 +137,19 @@ export default function ShareScreen() {
     router.back();
   }, [router]);
 
+  // Cambiar outfit de Tito (cicla entre todos los estados incluyendo hidden)
+  const handleChangeTitoOutfit = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setCurrentTitoIndex((prev) => (prev + 1) % TITO_STATES.length);
+  }, []);
+
   // Copiar texto
   const handleCopyText = useCallback(async () => {
-    if (!verseText) return;
+    if (!affirmationText) return;
 
     try {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      const textToCopy = verseReference 
-        ? `"${verseText}" — ${verseReference}` 
-        : verseText;
-      await Clipboard.setStringAsync(textToCopy);
+      await Clipboard.setStringAsync(`${affirmationText}\n\nDescargá Tito - Versículos Diarios: ${TITO_DOWNLOAD_URL}`);
       setShowCopiedFeedback(true);
 
       setTimeout(() => {
@@ -82,11 +159,11 @@ export default function ShareScreen() {
       console.error('Error al copiar texto:', error);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
-  }, [verseText, verseReference]);
+  }, [affirmationText]);
 
   // Guardar imagen en galería
   const handleSaveImage = useCallback(async () => {
-    if (!verseText || !cardRef.current) return;
+    if (!affirmationText || !cardRef.current) return;
 
     try {
       setIsSaving(true);
@@ -122,11 +199,11 @@ export default function ShareScreen() {
     } finally {
       setIsSaving(false);
     }
-  }, [verseText]);
+  }, [affirmationText]);
 
   // Compartir imagen
   const handleShareImage = useCallback(async () => {
-    if (!verseText || !cardRef.current) return;
+    if (!affirmationText || !cardRef.current) return;
 
     try {
       setIsSharing(true);
@@ -139,19 +216,29 @@ export default function ShareScreen() {
       });
 
       const canShare = await Sharing.isAvailableAsync();
-      
+
       if (canShare) {
-        await Sharing.shareAsync(uri, {
-          mimeType: 'image/png',
-          dialogTitle: 'Compartir versículo',
-        });
+        const shareMessage = `"${affirmationText}"\n\nDescargá Tito - Versículos Diarios para más versículos como este: ${TITO_DOWNLOAD_URL}`;
+
+        if (Platform.OS === 'ios') {
+          await Share.share({
+            message: shareMessage,
+            url: uri,
+          });
+        } else {
+          await Sharing.shareAsync(uri, {
+            mimeType: 'image/png',
+            dialogTitle: 'Compartir versículo - Tito',
+          });
+        }
         
         // Track share
-        analytics.track('verse_shared', {
-          verse_id: verseId,
-          category: verseCategory,
+        analytics.track('affirmation_shared', {
+          affirmation_id: affirmationId,
+          category: affirmationCategory,
           share_method: 'image',
           background_type: backgroundType,
+          has_tito: isTitoVisible,
         });
       } else {
         console.warn('Compartir no disponible en este dispositivo');
@@ -162,11 +249,25 @@ export default function ShareScreen() {
     } finally {
       setIsSharing(false);
     }
-  }, [verseText, verseId, verseCategory, backgroundType]);
+  }, [affirmationText, affirmationId, affirmationCategory, backgroundType, isTitoVisible]);
 
   // Obtener configuración del fondo
   const backgroundConfig = APP_BACKGROUNDS.find((bg) => bg.id === backgroundType) || APP_BACKGROUNDS[0];
   const isDefaultBg = backgroundConfig.id === 'default';
+
+  // Obtener label del botón de Tito
+  const getTitoButtonLabel = () => {
+    if (currentTitoState === 'hidden') {
+      return 'Mostrar Tito';
+    }
+    const nextIndex = (currentTitoIndex + 1) % TITO_STATES.length;
+    const nextState = TITO_STATES[nextIndex];
+    if (nextState === 'hidden') {
+      return 'Ocultar Tito';
+    }
+    const nextOutfit = TITO_OUTFITS.find(o => o.id === nextState);
+    return nextOutfit?.label || 'Cambiar';
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.backgroundSecondary }]}>
@@ -205,43 +306,52 @@ export default function ShareScreen() {
 
           {/* Contenido */}
           <View style={styles.previewContent}>
-            {/* Ícono decorativo */}
-            <Text style={styles.decorativeIcon}>✝️</Text>
-
             {/* Texto del versículo */}
-            <Text 
+            <Text
               style={[
-                styles.previewText, 
+                styles.previewText,
                 { color: isDefaultBg ? colors.text : '#FFFFFF' }
               ]}
             >
-              {verseText}
+              {mainText}
             </Text>
-
             {/* Referencia bíblica */}
-            {verseReference && (
-              <Text 
+            {bibleReference && (
+              <Text
                 style={[
-                  styles.previewReference, 
-                  { color: isDefaultBg ? colors.textSecondary : 'rgba(255,255,255,0.8)' }
+                  styles.previewReference,
+                  { color: isDefaultBg ? colors.text : '#FFFFFF' }
                 ]}
               >
-                — {verseReference}
+                {bibleReference}
               </Text>
             )}
           </View>
 
-          {/* Branding sutil */}
-          <View style={styles.brandingContainer}>
-            <Text 
-              style={[
-                styles.brandingText, 
-                { color: isDefaultBg ? colors.textTertiary : 'rgba(255,255,255,0.5)' }
-              ]}
-            >
-              Versículo
-            </Text>
-          </View>
+          {/* Tito - posición configurable */}
+          {isTitoVisible && currentTitoOutfit && (
+            <View style={[
+              styles.titoContainer,
+              {
+                bottom: currentTitoOutfit.style.bottomOffset * currentTitoOutfit.style.height,
+                ...(currentTitoOutfit.style.leftOffset !== undefined && {
+                  left: currentTitoOutfit.style.leftOffset * currentTitoOutfit.style.width
+                }),
+                ...(currentTitoOutfit.style.rightOffset !== undefined && {
+                  right: currentTitoOutfit.style.rightOffset * currentTitoOutfit.style.width
+                }),
+              }
+            ]}>
+              <Image
+                source={currentTitoOutfit.source}
+                style={{
+                  width: currentTitoOutfit.style.width,
+                  height: currentTitoOutfit.style.height,
+                }}
+                contentFit="contain"
+              />
+            </View>
+          )}
         </View>
 
         {/* Botones de acción */}
@@ -253,6 +363,13 @@ export default function ShareScreen() {
             onPress={handleSaveImage}
             isLoading={isSaving}
             isSuccess={showSavedFeedback}
+          />
+
+          {/* Cambiar outfit de Tito */}
+          <ActionButton
+            icon="magic"
+            label={getTitoButtonLabel()}
+            onPress={handleChangeTitoOutfit}
           />
 
           {/* Copiar texto */}
@@ -382,7 +499,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  // Preview Card
+  // Preview Card - más vertical (4:5 aspect ratio como Instagram)
   previewCard: {
     width: '100%',
     aspectRatio: 4 / 5,
@@ -399,40 +516,33 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: Spacing.xl,
-    paddingBottom: Spacing.xxxl,
-  },
-  decorativeIcon: {
-    fontSize: 32,
-    marginBottom: Spacing.l,
   },
   previewText: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '700',
     textAlign: 'center',
-    lineHeight: 34,
+    lineHeight: 36,
     textShadowColor: 'rgba(0, 0, 0, 0.2)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
     fontFamily: Typography.fontFamily.heading,
   },
   previewReference: {
-    fontSize: Typography.fontSize.body,
-    fontWeight: '500',
-    textAlign: 'center',
-    marginTop: Spacing.m,
+    fontSize: 16,
     fontStyle: 'italic',
+    textAlign: 'center',
+    lineHeight: 22,
     fontFamily: Typography.fontFamily.body,
+    opacity: 0.6,
+    marginTop: Spacing.m,
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
 
-  // Branding
-  brandingContainer: {
+  // Tito
+  titoContainer: {
     position: 'absolute',
-    bottom: Spacing.m,
-    right: Spacing.m,
-  },
-  brandingText: {
-    fontSize: 12,
-    fontWeight: '600',
   },
 
   // Actions Row

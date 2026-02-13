@@ -47,7 +47,7 @@ async function ensureAudioModeConfigured() {
 /**
  * Hook para reproducir audio desde una URL
  */
-export function useVerseAudio(): UseAudioPlayerResult {
+export function useAffirmationAudio(): UseAudioPlayerResult {
   const [state, setState] = useState<AudioState>('idle');
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const currentUrlRef = useRef<string | null>(null);
@@ -157,8 +157,5 @@ export function useVerseAudio(): UseAudioPlayerResult {
 
 // Exportar también el singleton del servicio
 export const audioService = {
-  useVerseAudio,
+  useAffirmationAudio,
 };
-
-/** @deprecated Usar useVerseAudio */
-export const useAffirmationAudio = useVerseAudio;

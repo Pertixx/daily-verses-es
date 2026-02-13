@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { Image } from 'expo-image';
 import Animated, { 
   FadeIn, 
   FadeInDown, 
@@ -23,7 +24,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { FontAwesome } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { PurchasesPackage } from 'react-native-purchases';
+import { PurchasesPackage, PACKAGE_TYPE } from 'react-native-purchases';
 import { Spacing, BorderRadius, Typography } from '@/constants/theme';
 import { useTheme } from '@/hooks';
 import { revenueCatService, notificationService, analytics } from '@/services';
@@ -39,35 +40,76 @@ interface PremiumFeature {
   description: string;
 }
 
+/** Mapea el tipo de paquete a nombre amigable en español */
+function getPackageDisplayName(pkg: PurchasesPackage): string {
+  switch (pkg.packageType) {
+    case PACKAGE_TYPE.MONTHLY:
+      return 'Plan Mensual';
+    case PACKAGE_TYPE.ANNUAL:
+      return 'Plan Anual';
+    case PACKAGE_TYPE.WEEKLY:
+      return 'Plan Semanal';
+    case PACKAGE_TYPE.SIX_MONTH:
+      return 'Plan 6 meses';
+    case PACKAGE_TYPE.THREE_MONTH:
+      return 'Plan 3 meses';
+    case PACKAGE_TYPE.TWO_MONTH:
+      return 'Plan 2 meses';
+    case PACKAGE_TYPE.LIFETIME:
+      return 'Acceso de por vida';
+    default:
+      return 'Premium';
+  }
+}
+
+/** Obtiene la descripción de periodicidad (ej: "/mes", "/año") */
+function getPackagePeriodSuffix(pkg: PurchasesPackage): string {
+  switch (pkg.packageType) {
+    case PACKAGE_TYPE.MONTHLY:
+    case PACKAGE_TYPE.TWO_MONTH:
+    case PACKAGE_TYPE.THREE_MONTH:
+    case PACKAGE_TYPE.SIX_MONTH:
+      return '/mes';
+    case PACKAGE_TYPE.ANNUAL:
+      return '/año';
+    case PACKAGE_TYPE.WEEKLY:
+      return '/semana';
+    case PACKAGE_TYPE.LIFETIME:
+      return 'único';
+    default:
+      return '';
+  }
+}
+
 // ============================================================================
 // Constants
 // ============================================================================
 
 const PREMIUM_FEATURES: PremiumFeature[] = [
   {
+    icon: 'book',
+    title: '+1500 versículos',
+    description: 'Accedé a más de 1500 versículos bíblicos',
+  },
+  {
     icon: 'th-large',
     title: 'Todas las categorías',
-    description: 'Accedé a las 12 categorías bíblicas',
+    description: 'Desbloquea las 18 categorías de versículos',
+  },
+  {
+    icon: 'volume-up',
+    title: 'Audio ilimitado',
+    description: 'Escuchá todos los versículos narrados',
+  },
+  {
+    icon: 'magic',
+    title: 'Mixes personalizados',
+    description: 'Creá tus propias listas de versículos',
   },
   {
     icon: 'paint-brush',
     title: 'Temas personalizados',
     description: 'Fondos e íconos exclusivos para tu app',
-  },
-  {
-    icon: 'book',
-    title: 'Más versículos',
-    description: 'Cientos de versículos nuevos cada mes',
-  },
-  {
-    icon: 'magic',
-    title: 'Mezclas personalizadas',
-    description: 'Creá tus propias listas de versículos',
-  },
-  {
-    icon: 'bell',
-    title: 'Notificaciones personalizadas',
-    description: 'Recibí versículos a tu hora preferida',
   },
 ];
 
@@ -114,8 +156,8 @@ export default function PaywallScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
-  const [monthlyPackage, setMonthlyPackage] = useState<PurchasesPackage | null>(null);
-  const [priceString, setPriceString] = useState('$0.99');
+  const [packages, setPackages] = useState<PurchasesPackage[]>([]);
+  const [selectedPackage, setSelectedPackage] = useState<PurchasesPackage | null>(null);
 
   // Cargar ofertas de RevenueCat
   useEffect(() => {
@@ -129,24 +171,26 @@ export default function PaywallScreen() {
       // Verificar si RevenueCat está listo para usar
       if (!revenueCatService.canMakePurchases()) {
         console.log('⚠️ RevenueCat no disponible - usando datos mock');
-        setPriceString('$0.99');
         setIsLoading(false);
         return;
       }
 
       const offering = await revenueCatService.getOfferings();
-      
+      console.log('📦 RevenueCat offerings:', offering);
       if (offering?.availablePackages?.length) {
-        const pkg = offering.availablePackages[0];
-        setMonthlyPackage(pkg);
-        setPriceString(pkg.product.priceString);
+        console.log('📦 Packages:', offering.availablePackages.map(p => ({
+          identifier: p.identifier,
+          packageType: p.packageType,
+          price: p.product.priceString,
+        })));
+        setPackages(offering.availablePackages);
+        // Seleccionar el primero por defecto
+        setSelectedPackage(offering.availablePackages[0]);
       } else {
         console.log('No hay ofertas disponibles');
-        setPriceString('$0.99');
       }
     } catch (error) {
       console.error('Error cargando ofertas:', error);
-      setPriceString('$0.99');
     } finally {
       setIsLoading(false);
     }
@@ -161,14 +205,16 @@ export default function PaywallScreen() {
 
   // Manejar compra
   const handlePurchase = useCallback(async () => {
-    if (!monthlyPackage && revenueCatService.canMakePurchases()) {
+    if (!selectedPackage && revenueCatService.canMakePurchases()) {
       Alert.alert('Error', 'No se pudo cargar la oferta. Intentá de nuevo.');
       return;
     }
 
+    const pkgToPurchase = selectedPackage;
+
     // Trackear intención de compra
     analytics.track('purchase_intent', {
-      product_id: monthlyPackage?.identifier,
+      product_id: pkgToPurchase?.identifier,
       source: 'in_app',
     });
 
@@ -178,7 +224,7 @@ export default function PaywallScreen() {
 
       // Trackear inicio de compra
       analytics.track('purchase_started', {
-        product_id: monthlyPackage?.identifier,
+        product_id: pkgToPurchase?.identifier,
         source: 'in_app',
       });
 
@@ -194,17 +240,19 @@ export default function PaywallScreen() {
         return;
       }
 
-      const success = await revenueCatService.purchasePackage(monthlyPackage);
+      const success = await revenueCatService.purchasePackage(pkgToPurchase!);
       
       if (success) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         analytics.track('purchase_completed', {
-          product_id: monthlyPackage?.identifier,
-          price: monthlyPackage?.product.price,
+          product_id: pkgToPurchase?.identifier,
+          price: pkgToPurchase?.product.price,
           source: 'in_app',
         });
-        // Programar notificación de recordatorio
-        await notificationService.scheduleTrialReminder(3);
+        if (pkgToPurchase?.packageType === PACKAGE_TYPE.MONTHLY) {
+          // Programar notificación de recordatorio
+          await notificationService.scheduleTrialReminder(3);
+        }
         Alert.alert('¡Éxito!', 'Tu suscripción ha sido activada.', [
           { text: 'OK', onPress: () => router.back() }
         ]);
@@ -212,7 +260,7 @@ export default function PaywallScreen() {
     } catch (error) {
       console.error('Error en la compra:', error);
       analytics.track('purchase_failed', {
-        product_id: monthlyPackage?.identifier,
+        product_id: pkgToPurchase?.identifier,
         source: 'in_app',
         error: error instanceof Error ? error.message : 'unknown',
       });
@@ -223,7 +271,7 @@ export default function PaywallScreen() {
     } finally {
       setIsPurchasing(false);
     }
-  }, [monthlyPackage, router]);
+  }, [selectedPackage, router]);
 
   // Restaurar compras
   const handleRestore = useCallback(async () => {
@@ -290,7 +338,11 @@ export default function PaywallScreen() {
           entering={FadeInDown.delay(150).duration(400)}
           style={styles.headerContent}
         >
-          <Text style={styles.logoEmoji}>✞️</Text>
+          <Image
+            source={require('@/assets/icons/tito.png')}
+            style={styles.logo}
+            contentFit="contain"
+          />
         </Animated.View>
 
         {/* Título */}
@@ -298,7 +350,7 @@ export default function PaywallScreen() {
           entering={FadeInDown.delay(200).duration(400)}
           style={[styles.headerTitle, { color: colors.text }]}
         >
-          Versículo Premium
+          Desbloquea todo
         </Animated.Text>
       </View>
 
@@ -324,32 +376,62 @@ export default function PaywallScreen() {
             ))}
           </ScrollView>
 
-          {/* Footer fijo con precio y CTA */}
+          {/* Footer fijo con precios y CTA */}
           <View style={[styles.footer, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
-            {/* Pricing Card */}
-            <Animated.View 
-              entering={FadeInUp.delay(300).duration(400)}
-              style={[styles.pricingCard, { 
-                backgroundColor: colors.cardBackground,
-                borderColor: colors.primary,
-              }]}
-            >
-              <View style={styles.pricingContent}>
-                <View style={styles.pricingLeft}>
-                  <View style={styles.planNameRow}>
-                    <Text style={[styles.planName, { color: colors.text }]}>
-                      Plan Mensual
-                    </Text>
-                    <View style={[styles.trialBadge, { backgroundColor: colors.successLight }]}>
-                      <Text style={[styles.trialBadgeText, { color: colors.success }]}>3 días gratis</Text>
+            {/* Package Cards - todas las ofertas de RevenueCat */}
+            {packages.map((pkg, index) => {
+              const isSelected = selectedPackage?.identifier === pkg.identifier;
+              const periodSuffix = getPackagePeriodSuffix(pkg);
+              const hasTrial = pkg.packageType === PACKAGE_TYPE.MONTHLY;
+              
+              return (
+                <Animated.View
+                  key={pkg.identifier}
+                  entering={FadeInUp.delay(300 + index * 50).duration(400)}
+                >
+                  <Pressable
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setSelectedPackage(pkg);
+                    }}
+                    style={[
+                      styles.pricingCard,
+                      { 
+                        backgroundColor: colors.cardBackground,
+                        borderColor: isSelected ? colors.primary : colors.border,
+                        borderWidth: isSelected ? 2 : 1,
+                      }
+                    ]}
+                  >
+                    <View style={styles.pricingContent}>
+                      <View style={styles.pricingLeft}>
+                        <View style={styles.planNameRow}>
+                          <Text style={[styles.planName, { color: colors.text }]}>
+                            {getPackageDisplayName(pkg)}
+                          </Text>
+                          {hasTrial && (
+                            <View style={[styles.trialBadge, { backgroundColor: colors.successLight }]}>
+                              <Text style={[styles.trialBadgeText, { color: colors.success }]}>3 días gratis</Text>
+                            </View>
+                          )}
+                        </View>
+                        <Text style={[styles.planDescription, { color: colors.textSecondary }]}>
+                          {pkg.packageType === PACKAGE_TYPE.LIFETIME 
+                            ? `${pkg.product.priceString} único • Pago único`
+                            : `Después ${pkg.product.priceString}${periodSuffix} • Cancela cuando quieras`
+                          }
+                        </Text>
+                      </View>
+                      <View style={[styles.radioOuter, { borderColor: colors.primary }]}>
+                        {isSelected && (
+                          <View style={[styles.radioInner, { backgroundColor: colors.primary }]} />
+                        )}
+                      </View>
                     </View>
-                  </View>
-                  <Text style={[styles.planDescription, { color: colors.textSecondary }]}>
-                    Después {priceString}/mes • Cancela cuando quieras
-                  </Text>
-                </View>
-              </View>
-            </Animated.View>
+                  </Pressable>
+                </Animated.View>
+              );
+            })}
 
             {/* CTA Button */}
             <Animated.View entering={FadeInUp.delay(400).duration(400)}>
@@ -432,8 +514,9 @@ const styles = StyleSheet.create({
   headerContent: {
     alignItems: 'center',
   },
-  logoEmoji: {
-    fontSize: 80,
+  logo: {
+    width: 150,
+    height: 150,
     marginBottom: Spacing.s,
   },
   premiumBadge: {
@@ -518,9 +601,21 @@ const styles = StyleSheet.create({
   // Pricing Card
   pricingCard: {
     borderRadius: BorderRadius.md,
-    borderWidth: 2,
     padding: Spacing.m,
-    marginBottom: Spacing.m,
+    marginBottom: Spacing.s,
+  },
+  radioOuter: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  radioInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
   },
   pricingContent: {
     flexDirection: 'row',

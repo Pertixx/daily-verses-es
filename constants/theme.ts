@@ -1,14 +1,14 @@
 // ============================================================================
-// Theme Constants - Colores y estilos de Versículo Design System
+// Theme Constants - Colores y estilos basados en Tito Design System
 // ============================================================================
 
 // Colores base que no cambian con el tema
 export const BaseColors = {
   // Colores de marca
-  primary: '#5B7FCC', // Azul sereno — fe, confianza, cielo
-  secondary: '#C9A96E', // Dorado cálido — divinidad, sabiduría
-  tertiary: '#F5F0E8', // Pergamino claro — tradición, pureza
-  accent: '#4A6BB5', // Azul profundo — hover/active
+  primary: '#8B6F4E', // Marrón cálido
+  secondary: '#D4B896', // Arena
+  tertiary: '#F5F0E8', // Pergamino claro
+  accent: '#C9A96E', // Dorado suave
 
   // Estados
   success: '#059669',
@@ -23,35 +23,35 @@ export const BaseColors = {
 export const LightColors = {
   ...BaseColors,
   // Neutrales
-  text: '#2D3748', // Texto principal
-  textSecondary: '#718096', // Texto secundario
-  textTertiary: '#A0AEC0',
-  textMuted: '#A0AEC0',
-  background: '#FAF8F5', // Fondo pergamino suave
+  text: '#1F2937', // Dark Gray
+  textSecondary: '#6B7280', // Medium Gray
+  textTertiary: '#9CA3AF',
+  textMuted: '#9CA3AF',
+  background: '#F5F0E8', // Pergamino claro
   backgroundSecondary: '#FFFFFF',
-  surface: '#FFFFFF',
-  surfaceSecondary: '#F7F4EF', // Superficie cálida
-  surfaceElevated: '#F7F4EF',
-  border: '#E2DDD5', // Borde cálido
-  borderLight: '#F0ECE4',
-  
+  surface: '#FFFFFF', // White
+  surfaceSecondary: '#FAF7F2', // Pergamino muy claro
+  surfaceElevated: '#FAF7F2',
+  border: '#E5E0D8', // Border cálido
+  borderLight: '#F0EBE3',
+
   // Específicos de UI
   cardBackground: '#FFFFFF',
   inputBackground: '#FFFFFF',
-  buttonPrimaryBg: '#5B7FCC',
+  buttonPrimaryBg: '#8B6F4E',
   buttonPrimaryText: '#FFFFFF',
-  buttonSecondaryBg: '#E8E0D0',
-  buttonSecondaryText: '#5B7FCC',
-  selectedCardBg: '#EDE8DC',
-  
+  buttonSecondaryBg: '#D4B896',
+  buttonSecondaryText: '#8B6F4E',
+  selectedCardBg: '#F5F0E8',
+
   // Badges
-  badgePrimaryBg: '#DDD5C3',
-  badgePrimaryText: '#5B7FCC',
+  badgePrimaryBg: '#E8DFD0',
+  badgePrimaryText: '#8B6F4E',
   badgeSuccessBg: '#D1FAE5',
   badgeSuccessText: '#059669',
   badgeInfoBg: '#DBEAFE',
   badgeInfoText: '#2563EB',
-  
+
   // Overlays
   overlayLight: 'rgba(255, 255, 255, 0.6)',
   overlayDark: 'rgba(0, 0, 0, 0.05)',
@@ -60,36 +60,37 @@ export const LightColors = {
 // Colores para Dark Mode
 export const DarkColors = {
   ...BaseColors,
+  primary: '#C9A96E', // Dorado en dark mode
   // Neutrales
-  text: '#F7F4EF', // Texto claro cálido
-  textSecondary: '#D4CFC5', // Texto secundario
-  textTertiary: '#A09A8E', // Texto terciario
-  textMuted: '#A09A8E',
-  background: '#1A1915', // Fondo oscuro cálido
-  backgroundSecondary: '#2A2820', // Sección oscura
-  surface: '#2A2820',
-  surfaceSecondary: '#3D3A30',
-  surfaceElevated: '#3D3A30',
-  border: '#3D3A30', // Borde oscuro cálido
-  borderLight: '#2A2820',
-  
+  text: '#F9FAFB', // Light Text
+  textSecondary: '#E5E7EB', // Medium Text
+  textTertiary: '#9CA3AF', // Secondary Text
+  textMuted: '#9CA3AF',
+  background: '#1A1612', // Marrón oscuro
+  backgroundSecondary: '#2D2822', // Marrón medio oscuro
+  surface: '#2D2822',
+  surfaceSecondary: '#3D3630',
+  surfaceElevated: '#3D3630',
+  border: '#4A4035', // Dark Border cálido
+  borderLight: '#2D2822',
+
   // Específicos de UI
-  cardBackground: '#2A2820',
-  inputBackground: '#2A2820',
-  buttonPrimaryBg: '#5B7FCC',
-  buttonPrimaryText: '#FFFFFF',
-  buttonSecondaryBg: '#3D3A30',
-  buttonSecondaryText: '#C9A96E',
-  selectedCardBg: '#3D3528',
-  
+  cardBackground: '#2D2822',
+  inputBackground: '#2D2822',
+  buttonPrimaryBg: '#C9A96E',
+  buttonPrimaryText: '#1A1612',
+  buttonSecondaryBg: '#4A3F35',
+  buttonSecondaryText: '#D4B896',
+  selectedCardBg: '#3D3630',
+
   // Badges
-  badgePrimaryBg: '#3D3528',
-  badgePrimaryText: '#C9A96E',
+  badgePrimaryBg: '#3D3630',
+  badgePrimaryText: '#D4B896',
   badgeSuccessBg: '#1A4D3A',
   badgeSuccessText: '#6EE7B7',
   badgeInfoBg: '#1E3A5F',
   badgeInfoText: '#93C5FD',
-  
+
   // Overlays
   overlayLight: 'rgba(255, 255, 255, 0.1)',
   overlayDark: 'rgba(0, 0, 0, 0.3)',
@@ -98,17 +99,17 @@ export const DarkColors = {
 // Colores legacy (para compatibilidad, usa LightColors por defecto)
 export const Colors = {
   // Colores Principales
-  primary: '#5B7FCC',
-  secondary: '#C9A96E',
+  primary: '#8B6F4E',
+  secondary: '#D4B896',
   tertiary: '#F5F0E8',
-  accent: '#4A6BB5',
+  accent: '#C9A96E',
 
   // Colores Neutrales
-  black: '#2D3748',
-  grayDark: '#718096',
-  grayMedium: '#A0AEC0',
-  grayLight: '#E2DDD5',
-  background: '#FAF8F5',
+  black: '#1F2937',
+  grayDark: '#6B7280',
+  grayMedium: '#9CA3AF',
+  grayLight: '#E5E7EB',
+  background: '#F5F0E8',
   white: '#FFFFFF',
 
   // Estados
@@ -181,8 +182,8 @@ export const BorderRadius = {
 
 export const Typography = {
   fontFamily: {
-    heading: 'Nunito',
-    body: 'Nunito',
+    heading: 'DMSans',
+    body: 'DMSans',
   },
   fontSize: {
     h1: 32,

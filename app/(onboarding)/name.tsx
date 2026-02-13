@@ -45,8 +45,9 @@ export default function NameScreen() {
     >
       {/* Header */}
       <OnboardingHeader
+        icon={require('@/assets/icons/tito.png')}
         title="¿Cómo te llamas?"
-        subtitle="Para personalizar tu experiencia con la Palabra"
+        subtitle="Me gustaría conocerte mejor!"
       />
 
       {/* Input */}

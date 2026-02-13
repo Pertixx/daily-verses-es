@@ -35,7 +35,7 @@ export default function AppIconScreen() {
     // Guardar la preferencia del ícono (se aplicará si el usuario tiene premium)
     await storageService.updateProfile({ appIcon: selectedIcon });
     analytics.track('onboarding_step_completed', { step: 'app_icon', step_number: ONBOARDING_STEP_MAP.app_icon });
-    router.push('/(onboarding)/notifications');
+    router.push('/(onboarding)/vibe');
   };
 
   return (
@@ -52,8 +52,9 @@ export default function AppIconScreen() {
       }
     >
       <OnboardingHeader
-        title="Elegí tu ícono"
-        subtitle="Personalizá cómo se ve Versículo en tu pantalla de inicio"
+        icon={require('@/assets/icons/tito.png')}
+        title="Elegí tu ícono de Tito"
+        subtitle="Personalizá cómo se ve Tito en tu pantalla de inicio"
       />
 
       {/* Icon Selector */}

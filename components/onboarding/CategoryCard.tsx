@@ -1,5 +1,5 @@
 // ============================================================================
-// CategoryCard - Tarjeta de categoría de versículos
+// CategoryCard - Tarjeta de categoría de afirmaciones
 // ============================================================================
 
 import { View, Text, StyleSheet } from 'react-native';
