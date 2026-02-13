@@ -83,7 +83,7 @@ class WidgetService {
         console.log('📱 Widget sync: No hay categorías accesibles (usuario no premium)');
         // Usar categorías por defecto gratuitas
         const profile = await storageService.getProfile();
-        const defaultCategories = profile?.assignedCategories ?? ['self_love', 'motivation', 'positivity'];
+        const defaultCategories = profile?.assignedCategories ?? ['esperanza', 'paz', 'amor', 'gratitud', 'animo'];
         const accessibleDefaults = filterCategoriesByAccess(defaultCategories);
         if (accessibleDefaults.length === 0) {
           return false;

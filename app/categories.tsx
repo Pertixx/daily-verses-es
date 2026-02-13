@@ -2,7 +2,7 @@
 // Categories Screen - Pantalla de categorías de versículos
 // ============================================================================
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -73,8 +73,6 @@ export default function CategoriesScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
-  // Categorías asignadas al usuario (las del mix personalizado desde onboarding)
-  const [mixCategories, setMixCategories] = useState<AffirmationCategory[]>([]);
   // Mixes custom creados por el usuario
   const [userCustomMixes, setUserCustomMixes] = useState<UserCustomMix[]>([]);
   // Mix activo
@@ -96,7 +94,7 @@ export default function CategoriesScreen() {
 
   const loadData = async () => {
     try {
-      const [profile, favorites, customPhrases, customMixes, currentActiveMix, hasSubscription, availableCategories] = await Promise.all([
+      const [, favorites, customPhrases, customMixes, currentActiveMix, hasSubscription, availableCategories] = await Promise.all([
         storageService.getProfile(),
         storageService.getFavorites(),
         storageService.getCustomPhrases(),
@@ -106,8 +104,6 @@ export default function CategoriesScreen() {
         getAvailableCategories(),
       ]);
 
-      const userMixCategories = profile?.assignedCategories || ['esperanza', 'paz', 'amor', 'gratitud', 'animo', 'fe_y_esperanza'];
-      setMixCategories(userMixCategories);
       setAllCategories(availableCategories);
       setUserCustomMixes(customMixes);
       setFavoritesCount(favorites?.length || 0);
@@ -126,16 +122,6 @@ export default function CategoriesScreen() {
       console.error('Error loading categories data:', error);
     }
   };
-
-  // Mixes de categorías "Para ti" (las del mix del usuario desde onboarding)
-  const forYouCategoryMixes = useMemo(() => {
-    return allCategories.filter(cat => mixCategories.includes(cat.id));
-  }, [mixCategories, allCategories]);
-
-  // Mixes de categorías "Explorar" (las que no están en el mix)
-  const exploreCategoryMixes = useMemo(() => {
-    return allCategories.filter(cat => !mixCategories.includes(cat.id));
-  }, [mixCategories, allCategories]);
 
   const handleBack = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -166,11 +152,6 @@ export default function CategoriesScreen() {
   const isMixActive = useCallback((mixId: string) => {
     return activeMix?.mixId === mixId;
   }, [activeMix]);
-
-  // Handler para mix personalizado del onboarding
-  const handlePersonalizedMixPress = useCallback(() => {
-    activateMix(PERSONALIZED_MIX_ID, 'personalized');
-  }, [activateMix]);
 
   // Handler para mix de favoritos
   const handleFavoritesMixPress = useCallback(() => {
@@ -329,25 +310,13 @@ export default function CategoriesScreen() {
           </Animated.View>
         )}
 
-        {/* Sección principal: Mix Personalizado, Favoritos, Frases propias */}
+        {/* Sección principal: Favoritos, Frases propias */}
         <SectionHeader
           title="Colecciones"
           subtitle="Tus versículos especiales"
           delay={50}
         />
         <View style={styles.tilesGrid}>
-          {/* Mix Personalizado (del onboarding) */}
-          <MixCard
-            name="Mix Personalizado"
-            icon="magic"
-            color={colors.primary}
-            isActive={isMixActive(PERSONALIZED_MIX_ID)}
-            count={mixCategories.length}
-            countSuffix="categorías"
-            onPress={handlePersonalizedMixPress}
-            index={0}
-          />
-
           {/* Mis Favoritos */}
           <MixCard
             name="Mis favoritos"
@@ -359,7 +328,7 @@ export default function CategoriesScreen() {
             isLocked={favoritesCount < MIX_LIMITS.MIN_FAVORITES_REQUIRED}
             lockMessage={`Mínimo ${MIX_LIMITS.MIN_FAVORITES_REQUIRED} favoritos`}
             onPress={handleFavoritesMixPress}
-            index={1}
+            index={0}
           />
 
           {/* Mis Propias Frases */}
@@ -373,7 +342,7 @@ export default function CategoriesScreen() {
             isLocked={!isPremium}
             lockMessage="Premium"
             onPress={handleCustomPhrasesMixPress}
-            index={2}
+            index={1}
           />
         </View>
 
@@ -395,14 +364,14 @@ export default function CategoriesScreen() {
           </Pressable>
         </View>
 
-        {/* Para ti - Mixes de categorías del onboarding */}
-        <SectionHeader 
-          title="Para ti" 
-          subtitle="Basado en tus preferencias"
+        {/* Todas las categorías */}
+        <SectionHeader
+          title="Categorías"
+          subtitle="Todos los versículos disponibles"
           delay={150}
         />
         <View style={styles.tilesGrid}>
-          {forYouCategoryMixes.map((category, index) => (
+          {allCategories.map((category, index) => (
             <MixCard
               key={category.id}
               name={category.name}
@@ -416,32 +385,6 @@ export default function CategoriesScreen() {
             />
           ))}
         </View>
-
-        {/* Explorar - Mixes de otras categorías */}
-        {exploreCategoryMixes.length > 0 && (
-          <>
-            <SectionHeader 
-              title="Explorar" 
-              subtitle="Descubrí más categorías"
-              delay={250}
-            />
-            <View style={styles.tilesGrid}>
-              {exploreCategoryMixes.map((category, index) => (
-                <MixCard
-                  key={category.id}
-                  name={category.name}
-                  icon={category.icon}
-                  color={category.color}
-                  isActive={isMixActive(`category-${category.id}`)}
-                  isLocked={category.isPremium && !isPremium}
-                  lockMessage="Premium"
-                  onPress={() => handleCategoryMixPress(category.id, category.isPremium || false)}
-                  index={index}
-                />
-              ))}
-            </View>
-          </>
-        )}
 
         {/* Banner Premium */}
         {!isPremium && (

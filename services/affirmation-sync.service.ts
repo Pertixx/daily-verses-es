@@ -512,6 +512,7 @@ class AffirmationSyncService {
 
       return {
         id: item.hashid,
+        title: item.title,
         text: item.body,
         audioSource,
         audioDuration,

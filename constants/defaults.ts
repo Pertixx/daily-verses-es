@@ -2,13 +2,25 @@
 // Default Values - Valores por defecto para configuraciones
 // ============================================================================
 
-import { NotificationSettings, StreakData, UserData, UserProfile } from '@/types';
+import type { NotificationSettings, StreakData, UserData, UserProfile, AffirmationCategory } from '@/types';
+
+/**
+ * Categorías por defecto para nuevos usuarios (las 5 categorías gratuitas)
+ */
+export const DEFAULT_CATEGORIES: AffirmationCategory[] = [
+  'esperanza',
+  'paz',
+  'amor',
+  'gratitud',
+  'animo',
+];
 
 /**
  * Perfil por defecto del usuario
  */
 export const DEFAULT_USER_PROFILE: UserProfile = {
   name: '',
+  assignedCategories: DEFAULT_CATEGORIES,
 };
 
 /**

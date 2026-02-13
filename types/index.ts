@@ -316,6 +316,8 @@ export interface FavoriteAffirmation {
   id: string;
   /** Texto de la afirmación */
   text: string;
+  /** Título/referencia bíblica del versículo */
+  title?: string;
   /** Categoría de la afirmación */
   category: string;
   /** Fecha en que se marcó como favorita (ISO string) */
@@ -590,6 +592,7 @@ export type AnalyticsEvent =
   | 'affirmation_shared' // Done
   | 'affirmation_audio_played' // Done
   | 'affirmation_explanation_viewed' // Done
+  | 'affirmation_suggestion_tapped'
   | 'affirmations_sync_started'
   | 'affirmations_sync_completed'
   | 'affirmations_sync_failed'

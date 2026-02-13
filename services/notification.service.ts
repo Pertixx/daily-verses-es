@@ -46,7 +46,7 @@ class NotificationService {
     try {
       const activeMix = await storageService.getActiveMix();
       const profile = await storageService.getProfile();
-      const defaultCategories = profile?.assignedCategories || ['self_love', 'motivation', 'positivity'];
+      const defaultCategories = profile?.assignedCategories || ['esperanza', 'paz', 'amor', 'gratitud', 'animo'];
       
       // Verificar si el usuario es premium
       let isPremium = false;
@@ -271,7 +271,7 @@ class NotificationService {
         identifier: 'streak-reminder',
         content: {
           title: '🔥 ¡No pierdas tu racha!',
-          body: 'Aún no has completado tu afirmación de hoy. ¡Mantén el impulso!',
+          body: 'Todavía no leíste tu versículo de hoy. ¡No pierdas el impulso!',
           data: { type: 'streak-reminder' },
           sound: true,
         },

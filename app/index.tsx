@@ -136,7 +136,7 @@ export default function HomeScreen() {
   const loadAffirmationsForMix = async (
     activeMix: ActiveMixReference | null,
     defaultCategories: AffirmationCategory[],
-    userFavorites: { id: string; text: string; category: string }[],
+    userFavorites: { id: string; text: string; title?: string; category: string }[],
     isPremiumUser: boolean
   ): Promise<Affirmation[]> => {
     // Cargar categorías disponibles dinámicamente
@@ -183,6 +183,7 @@ export default function HomeScreen() {
         return userFavorites.map((fav) => ({
           id: fav.id,
           text: fav.text,
+          title: fav.title,
           audioSource: undefined,
           audioDuration: undefined,
         }));
@@ -314,7 +315,7 @@ export default function HomeScreen() {
             // Cargar afirmaciones según el mix activo
             const loadedAffirmations = await loadAffirmationsForMix(
               activeMix,
-              profile.assignedCategories || ['self_love', 'motivation', 'positivity'],
+              profile.assignedCategories || ['esperanza', 'paz', 'amor', 'gratitud', 'animo'],
               userFavorites,
               hasSubscription
             );
@@ -378,7 +379,8 @@ export default function HomeScreen() {
       const favoriteCategory = await affirmationService.getCategoryForAffirmation(affirmation.id);
       await storageService.addFavorite({
         id: affirmation.id,
-        text: affirmation.title || affirmation.text,
+        text: affirmation.text,
+        title: affirmation.title,
         category: favoriteCategory || 'custom',
       });
       setFavorites((prev) => new Set(prev).add(affirmation.id));
@@ -510,6 +512,34 @@ export default function HomeScreen() {
     itemVisiblePercentThreshold: 50,
   }).current;
 
+  // Callback cuando se activa una categoría desde el modal de profundiza
+  const handleCategoryActivatedFromModal = useCallback(async () => {
+    try {
+      const [activeMix, profile, userFavorites, hasSubscription] = await Promise.all([
+        storageService.getActiveMix(),
+        storageService.getProfile(),
+        storageService.getFavorites(),
+        revenueCatService.hasActiveSubscription(),
+      ]);
+
+      const activeMixId = activeMix ? `${activeMix.mixType}-${activeMix.mixId}` : 'personalized';
+      currentMixRef.current = activeMixId;
+
+      const loadedAffirmations = await loadAffirmationsForMix(
+        activeMix,
+        profile?.assignedCategories || ['esperanza', 'paz', 'amor', 'gratitud', 'animo'],
+        userFavorites,
+        hasSubscription
+      );
+
+      setAffirmations(shuffleArray([...loadedAffirmations]));
+      setCurrentIndex(0);
+      flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
+    } catch (error) {
+      console.error('Error reloading after category change:', error);
+    }
+  }, []);
+
   // Render de cada afirmación
   const renderItem = useCallback(
     ({ item, index }: { item: Affirmation; index: number }) => (
@@ -523,9 +553,11 @@ export default function HomeScreen() {
         textColor={textColor}
         insets={insets}
         isActive={index === currentIndex}
+        isPremium={isPremium}
+        onCategoryActivated={handleCategoryActivatedFromModal}
       />
     ),
-    [favorites, handleToggleFavorite, handleShare, handlePlayAudio, textColor, insets, currentIndex, isPlaying, currentAudioUrl]
+    [favorites, handleToggleFavorite, handleShare, handlePlayAudio, textColor, insets, currentIndex, isPlaying, currentAudioUrl, isPremium, handleCategoryActivatedFromModal]
   );
 
   const keyExtractor = useCallback((item: Affirmation) => item.id, []);
@@ -776,6 +808,8 @@ interface AffirmationSlideProps {
   textColor: string;
   insets: { top: number; bottom: number };
   isActive: boolean;
+  isPremium: boolean;
+  onCategoryActivated?: (categoryId: string) => void;
 }
 
 function AffirmationSlide({
@@ -788,6 +822,8 @@ function AffirmationSlide({
   textColor,
   insets,
   isActive,
+  isPremium,
+  onCategoryActivated,
 }: AffirmationSlideProps) {
   const colors = useColors();
   const [showExplanation, setShowExplanation] = useState(false);
@@ -903,6 +939,8 @@ function AffirmationSlide({
             setShowExplanation(false);
             onShare();
           }}
+          isPremium={isPremium}
+          onCategoryActivated={onCategoryActivated}
         />
       )}
     </View>

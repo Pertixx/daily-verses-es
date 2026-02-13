@@ -2,7 +2,7 @@
 // VerseExplanationModal - Modal con la reflexion/explicacion del versiculo
 // ============================================================================
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Modal,
   View,
@@ -13,6 +13,7 @@ import {
   Dimensions,
 } from 'react-native';
 import Animated, {
+  FadeIn,
   FadeInDown,
   useSharedValue,
   useAnimatedStyle,
@@ -26,10 +27,13 @@ import Animated, {
 import { FontAwesome } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { useColors } from '@/hooks';
 import { Spacing, BorderRadius, Typography } from '@/constants/theme';
-import type { Affirmation } from '@/types';
+import { affirmationService, storageService, analytics } from '@/services';
+import { getAvailableCategories } from '@/services/category.service';
+import type { Affirmation, CategoryConfig } from '@/types';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -113,6 +117,11 @@ function TitoParticle({ particle }: { particle: TitoParticleData }) {
 // Types
 // ============================================================================
 
+interface Suggestion {
+  affirmation: Affirmation;
+  category: CategoryConfig;
+}
+
 interface VerseExplanationModalProps {
   visible: boolean;
   onClose: () => void;
@@ -120,6 +129,8 @@ interface VerseExplanationModalProps {
   isPlayingAudio: boolean;
   onPlayAudio: () => void;
   onShare: () => void;
+  isPremium: boolean;
+  onCategoryActivated?: (categoryId: string) => void;
 }
 
 // ============================================================================
@@ -129,18 +140,113 @@ interface VerseExplanationModalProps {
 export function VerseExplanationModal({
   visible,
   onClose,
-  affirmation,
+  affirmation: initialAffirmation,
   isPlayingAudio,
   onPlayAudio,
   onShare,
+  isPremium,
+  onCategoryActivated,
 }: VerseExplanationModalProps) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const scrollRef = useRef<ScrollView>(null);
+
+  // State local para el versículo actual (permite navegar entre sugerencias)
+  const [currentAffirmation, setCurrentAffirmation] = useState(initialAffirmation);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [contentKey, setContentKey] = useState(0); // para re-trigger animaciones
+
+  // Sincronizar con el prop cuando cambia externamente
+  useEffect(() => {
+    setCurrentAffirmation(initialAffirmation);
+  }, [initialAffirmation]);
 
   // Parsear titulo y referencia biblica
-  const titleParts = (affirmation.title || '').split(' — ');
+  const titleParts = (currentAffirmation.title || '').split(' — ');
   const mainText = titleParts[0];
   const bibleReference = titleParts.length > 1 ? titleParts[1] : null;
+
+  // Cargar sugerencias cuando se abre el modal o cambia el versículo
+  const loadSuggestions = useCallback(async () => {
+    try {
+      const categories = await getAvailableCategories();
+
+      // Buscar una categoría free y una premium, distintas entre sí
+      const freeCategories = categories.filter(c => !c.isPremium);
+      const premiumCategories = categories.filter(c => c.isPremium);
+
+      // Shuffle cada lista
+      const shuffledFree = [...freeCategories].sort(() => Math.random() - 0.5);
+      const shuffledPremium = [...premiumCategories].sort(() => Math.random() - 0.5);
+
+      // Helper: buscar la primera categoría que tenga versículos
+      const findSuggestion = async (cats: CategoryConfig[]): Promise<Suggestion | null> => {
+        for (const cat of cats) {
+          const aff = await affirmationService.getRandomAffirmation([cat.id]);
+          if (aff) return { affirmation: aff, category: cat };
+        }
+        return null;
+      };
+
+      const [freeSuggestion, premiumSuggestion] = await Promise.all([
+        findSuggestion(shuffledFree),
+        findSuggestion(shuffledPremium),
+      ]);
+
+      const newSuggestions: Suggestion[] = [];
+      if (freeSuggestion) newSuggestions.push(freeSuggestion);
+      if (premiumSuggestion) newSuggestions.push(premiumSuggestion);
+
+      setSuggestions(newSuggestions);
+    } catch (error) {
+      console.warn('[VerseExplanationModal] Error loading suggestions:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (visible) {
+      loadSuggestions();
+    } else {
+      setSuggestions([]);
+    }
+  }, [visible, currentAffirmation.id, loadSuggestions]);
+
+  // Handler para tocar una sugerencia
+  const handleSuggestionPress = useCallback(async (suggestion: Suggestion) => {
+    // Si es premium y el user es free → paywall
+    if (suggestion.category.isPremium && !isPremium) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      analytics.track('paywall_viewed', { source: 'profundiza_suggestion', category: suggestion.category.id });
+      onClose();
+      router.push('/paywall');
+      return;
+    }
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    // Activar la categoría como mix activo
+    await storageService.setActiveMix({
+      mixId: `category-${suggestion.category.id}`,
+      mixType: 'category',
+    });
+
+    analytics.track('affirmation_suggestion_tapped', {
+      from_affirmation: currentAffirmation.id,
+      to_affirmation: suggestion.affirmation.id,
+      to_category: suggestion.category.id,
+    });
+
+    // Notificar al home
+    onCategoryActivated?.(suggestion.category.id);
+
+    // Actualizar el versículo mostrado
+    setCurrentAffirmation(suggestion.affirmation);
+    setContentKey(prev => prev + 1);
+
+    // Scroll to top
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
+  }, [isPremium, currentAffirmation.id, onClose, onCategoryActivated, router]);
 
   // Animaciones de botones
   const closeScale = useSharedValue(1);
@@ -264,87 +370,140 @@ export function VerseExplanationModal({
             </Pressable>
           </View>
 
-          {/* Titulo del versiculo */}
-          <Text style={[styles.verseTitle, { color: colors.text }]}>
-            {mainText}
-          </Text>
-
-          {/* Separador */}
-          <View style={styles.separatorContainer}>
-            <View style={[styles.separator, { backgroundColor: colors.primary }]} />
-          </View>
-
           {/* Contenido scrolleable */}
           <ScrollView
+            ref={scrollRef}
             style={styles.scrollView}
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
-            <Text style={[styles.explanationText, { color: colors.text }]}>
-              {affirmation.text}
-            </Text>
-          </ScrollView>
-
-          {/* Botones de accion: Compartir y Amen */}
-          <View style={styles.actionsRow}>
-            <Pressable
-              style={[styles.modalActionButton, { backgroundColor: colors.surfaceSecondary }]}
-              onPress={handleShare}
+            {/* Titulo del versiculo */}
+            <Animated.Text
+              key={`title-${contentKey}`}
+              entering={FadeIn.duration(300)}
+              style={[styles.verseTitle, { color: colors.text }]}
             >
-              <FontAwesome name="share" size={16} color={colors.text} />
-              <Text style={[styles.modalActionText, { color: colors.text }]}>Compartir</Text>
-            </Pressable>
+              {mainText}
+            </Animated.Text>
 
-            <View style={styles.amenButtonWrapper}>
-              <Pressable
-                onPressIn={handleAmenPressIn}
-                onPressOut={handleAmenPressOut}
-                style={[styles.amenButton, { backgroundColor: colors.surfaceSecondary }]}
-              >
-                {/* Fill overlay */}
-                <Animated.View style={[styles.amenFillOverlay, { backgroundColor: colors.primary }, amenFillStyle]} />
-                <Text style={styles.amenEmoji}>{'\u{1F64F}'}</Text>
-                <Text style={[styles.modalActionText, { color: colors.text }]}>Amen</Text>
-              </Pressable>
-              <Text style={[styles.amenHint, { color: colors.textTertiary }]}>Mantené presionado</Text>
+            {/* Separador */}
+            <View style={styles.separatorContainer}>
+              <View style={[styles.separator, { backgroundColor: colors.primary }]} />
             </View>
-          </View>
 
-          {/* Footer con audio (solo si hay audioSource) */}
-          {affirmation.audioSource && (
-            <View style={[styles.audioFooter, { borderTopColor: colors.border }]}>
+            {/* Texto de la reflexión */}
+            <Animated.Text
+              key={`text-${contentKey}`}
+              entering={FadeIn.delay(100).duration(300)}
+              style={[styles.explanationText, { color: colors.text }]}
+            >
+              {currentAffirmation.text}
+            </Animated.Text>
+
+            {/* Botones de accion: Compartir y Amen */}
+            <View style={styles.actionsRow}>
               <Pressable
-                onPress={handlePlayAudio}
-                onPressIn={() => { playScale.value = withSpring(0.9); }}
-                onPressOut={() => { playScale.value = withSpring(1); }}
+                style={[styles.modalActionButton, { backgroundColor: colors.surfaceSecondary }]}
+                onPress={handleShare}
               >
-                <Animated.View
-                  style={[
-                    styles.playButton,
-                    { backgroundColor: colors.primary },
-                    playAnimatedStyle,
-                  ]}
-                >
-                  <FontAwesome
-                    name={isPlayingAudio ? 'pause' : 'play'}
-                    size={18}
-                    color="#FFFFFF"
-                    style={!isPlayingAudio ? { marginLeft: 2 } : undefined}
-                  />
-                </Animated.View>
+                <FontAwesome name="share" size={16} color={colors.text} />
+                <Text style={[styles.modalActionText, { color: colors.text }]}>Compartir</Text>
               </Pressable>
-              <View style={styles.audioTextContainer}>
-                <Text style={[styles.audioLabel, { color: colors.text }]}>
-                  {isPlayingAudio ? 'Reproduciendo...' : 'Escuchar reflexion'}
-                </Text>
-                {affirmation.audioDuration && (
-                  <Text style={[styles.audioDuration, { color: colors.textTertiary }]}>
-                    {Math.ceil(affirmation.audioDuration / 60)} min
-                  </Text>
-                )}
+
+              <View style={styles.amenButtonWrapper}>
+                <Pressable
+                  onPressIn={handleAmenPressIn}
+                  onPressOut={handleAmenPressOut}
+                  style={[styles.amenButton, { backgroundColor: colors.surfaceSecondary }]}
+                >
+                  {/* Fill overlay */}
+                  <Animated.View style={[styles.amenFillOverlay, { backgroundColor: colors.primary }, amenFillStyle]} />
+                  <Text style={styles.amenEmoji}>{'\u{1F64F}'}</Text>
+                  <Text style={[styles.modalActionText, { color: colors.text }]}>Amen</Text>
+                </Pressable>
+                <Text style={[styles.amenHint, { color: colors.textTertiary }]}>Mantené presionado</Text>
               </View>
             </View>
-          )}
+
+            {/* Footer con audio (solo si hay audioSource) */}
+            {currentAffirmation.audioSource && (
+              <View style={[styles.audioFooter, { borderTopColor: colors.border }]}>
+                <Pressable
+                  onPress={handlePlayAudio}
+                  onPressIn={() => { playScale.value = withSpring(0.9); }}
+                  onPressOut={() => { playScale.value = withSpring(1); }}
+                >
+                  <Animated.View
+                    style={[
+                      styles.playButton,
+                      { backgroundColor: colors.primary },
+                      playAnimatedStyle,
+                    ]}
+                  >
+                    <FontAwesome
+                      name={isPlayingAudio ? 'pause' : 'play'}
+                      size={18}
+                      color="#FFFFFF"
+                      style={!isPlayingAudio ? { marginLeft: 2 } : undefined}
+                    />
+                  </Animated.View>
+                </Pressable>
+                <View style={styles.audioTextContainer}>
+                  <Text style={[styles.audioLabel, { color: colors.text }]}>
+                    {isPlayingAudio ? 'Reproduciendo...' : 'Escuchar reflexion'}
+                  </Text>
+                  {currentAffirmation.audioDuration && (
+                    <Text style={[styles.audioDuration, { color: colors.textTertiary }]}>
+                      {Math.ceil(currentAffirmation.audioDuration / 60)} min
+                    </Text>
+                  )}
+                </View>
+              </View>
+            )}
+
+            {/* Sugerencias: Seguí leyendo */}
+            {suggestions.length > 0 && (
+              <Animated.View
+                key={`suggestions-${contentKey}`}
+                entering={FadeInDown.delay(200).duration(300)}
+              >
+                <View style={[styles.suggestionsSeparator, { borderTopColor: colors.border }]}>
+                  <Text style={[styles.suggestionsTitle, { color: colors.textSecondary }]}>
+                    Seguí leyendo
+                  </Text>
+                </View>
+                <View style={styles.suggestionsRow}>
+                  {suggestions.map((s) => (
+                    <Pressable
+                      key={s.affirmation.id}
+                      style={[styles.suggestionCard, { backgroundColor: colors.surfaceSecondary }]}
+                      onPress={() => handleSuggestionPress(s)}
+                    >
+                      {/* Badge de categoría */}
+                      <View style={[styles.suggestionBadge, { backgroundColor: s.category.color + '20' }]}>
+                        <FontAwesome name={s.category.icon as any} size={10} color={s.category.color} />
+                        <Text style={[styles.suggestionBadgeText, { color: s.category.color }]} numberOfLines={1}>
+                          {s.category.name}
+                        </Text>
+                        {s.category.isPremium && !isPremium && (
+                          <FontAwesome name="lock" size={9} color={s.category.color} />
+                        )}
+                      </View>
+                      {/* Título del versículo */}
+                      <Text
+                        style={[styles.suggestionText, { color: colors.text }]}
+                        numberOfLines={2}
+                      >
+                        {(s.affirmation.title || s.affirmation.text).split(' — ')[0]}
+                      </Text>
+                      {/* Flecha */}
+                      <FontAwesome name="chevron-right" size={10} color={colors.textTertiary} style={styles.suggestionArrow} />
+                    </Pressable>
+                  ))}
+                </View>
+              </Animated.View>
+            )}
+          </ScrollView>
 
           {/* Tito Praying particles */}
           {amenParticles.length > 0 && (
@@ -543,5 +702,54 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.caption,
     fontWeight: Typography.fontWeight.regular,
     marginTop: 2,
+  },
+
+  // Suggestions
+  suggestionsSeparator: {
+    borderTopWidth: 1,
+    paddingTop: Spacing.l,
+    marginTop: Spacing.l,
+  },
+  suggestionsTitle: {
+    fontSize: Typography.fontSize.caption,
+    fontWeight: Typography.fontWeight.semibold,
+    fontFamily: Typography.fontFamily.heading,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: Spacing.m,
+  },
+  suggestionsRow: {
+    flexDirection: 'row',
+    gap: Spacing.s,
+  },
+  suggestionCard: {
+    flex: 1,
+    padding: Spacing.m,
+    borderRadius: BorderRadius.md,
+  },
+  suggestionBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 4,
+    paddingHorizontal: Spacing.s,
+    paddingVertical: 3,
+    borderRadius: BorderRadius.sm,
+    marginBottom: Spacing.s,
+  },
+  suggestionBadgeText: {
+    fontSize: 11,
+    fontWeight: Typography.fontWeight.semibold,
+    fontFamily: Typography.fontFamily.heading,
+  },
+  suggestionText: {
+    fontSize: Typography.fontSize.caption,
+    fontWeight: Typography.fontWeight.medium,
+    fontFamily: Typography.fontFamily.body,
+    lineHeight: 18,
+  },
+  suggestionArrow: {
+    marginTop: Spacing.s,
+    alignSelf: 'flex-end',
   },
 });
