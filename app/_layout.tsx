@@ -78,9 +78,9 @@ export default function RootLayout() {
     }
   }, [appState.isReady, appState.onboardingCompleted]);
 
-  // Sincronizar afirmaciones al retomar la app (solo si completó onboarding)
+  // Sincronizar afirmaciones al retomar la app
   useEffect(() => {
-    if (!appState.isReady || !appState.onboardingCompleted) return;
+    if (!appState.isReady) return;
 
     const subscription = RNAppState.addEventListener('change', async (nextAppState) => {
       if (nextAppState === 'active') {
@@ -101,7 +101,7 @@ export default function RootLayout() {
     return () => {
       subscription.remove();
     };
-  }, [appState.isReady, appState.onboardingCompleted]);
+  }, [appState.isReady]);
 
   // Inicializar app - solo lee de AsyncStorage
   useEffect(() => {

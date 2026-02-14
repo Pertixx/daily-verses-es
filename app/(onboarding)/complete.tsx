@@ -19,7 +19,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { Spacing, BorderRadius, Typography, ThemeColors, BaseColors } from '@/constants/theme';
-import { storageService, revenueCatService, widgetService } from '@/services';
+import { storageService, revenueCatService, widgetService, affirmationSyncService } from '@/services';
 import { OnboardingContainer, AnimatedButton } from '@/components/onboarding';
 import { useTheme } from '@/hooks';
 
@@ -70,6 +70,19 @@ export default function CompleteScreen() {
 
       // Marcar onboarding como completado
       await storageService.completeOnboarding();
+
+      // Establecer primera categoría asignada como mix activo
+      const profile = await storageService.getProfile();
+      const firstCategory = profile?.assignedCategories?.[0] || 'esperanza';
+      await storageService.setActiveMix({
+        mixId: `category-${firstCategory}`,
+        mixType: 'category',
+      });
+
+      // Sincronizar afirmaciones desde backend (no bloqueante)
+      affirmationSyncService.syncIfNeeded().catch(err =>
+        console.error('Error al sincronizar después del onboarding:', err)
+      );
 
       // Sincronizar widgets en ambas plataformas (iOS y Android)
       try {

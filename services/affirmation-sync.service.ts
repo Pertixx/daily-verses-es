@@ -50,11 +50,30 @@ export interface SyncMetadata {
 }
 
 /**
- * Respuesta del API de entidades
+ * Mapeo estático de entidades del backend (name → id)
+ * El endpoint /entities no existe en la API de Contentor,
+ * así que usamos este mapeo fijo. Si se agregan nuevas categorías
+ * en el backend, actualizar aquí y en DEFAULT_CATEGORY_UI_MAP.
  */
-interface EntitiesApiResponse {
-  entities: BackendEntity[];
-}
+const BACKEND_ENTITIES: BackendEntity[] = [
+  { id: 'ozk69vyke0', name: 'Esperanza', display_name: 'Esperanza', slug: null, emoji: null, metadata: '', articles_count: 100 },
+  { id: 'p0m08pzkzr', name: 'Paz', display_name: 'Paz', slug: null, emoji: null, metadata: '', articles_count: 100 },
+  { id: 'q61oxpg10p', name: 'Ansiedad', display_name: 'Ansiedad', slug: null, emoji: null, metadata: '', articles_count: 100 },
+  { id: '9jmg43bmqv', name: 'Fortaleza', display_name: 'Fortaleza', slug: null, emoji: null, metadata: '', articles_count: 100 },
+  { id: '70mleojko8', name: 'Animo', display_name: 'Ánimo', slug: null, emoji: null, metadata: '', articles_count: 100 },
+  { id: '28m22n5mzr', name: 'Gratitud', display_name: 'Gratitud', slug: null, emoji: null, metadata: '', articles_count: 100 },
+  { id: '4j1qlnqkxd', name: 'Amor', display_name: 'Amor', slug: null, emoji: null, metadata: '', articles_count: 100 },
+  { id: 'obmrpz31ex', name: 'Perdon', display_name: 'Perdón', slug: null, emoji: null, metadata: '', articles_count: 100 },
+  { id: '02kpld71dx', name: 'Familia', display_name: 'Familia', slug: null, emoji: null, metadata: '', articles_count: 100 },
+  { id: 'ydmdb5v1j4', name: 'Confianza en Dios', display_name: 'Confianza en Dios', slug: null, emoji: null, metadata: '', articles_count: 100 },
+  { id: '4j1qlnzkxd', name: 'Miedo', display_name: 'Miedo', slug: null, emoji: null, metadata: '', articles_count: 100 },
+  { id: 'obmrpzz1ex', name: 'Tristeza', display_name: 'Tristeza', slug: null, emoji: null, metadata: '', articles_count: 100 },
+  { id: '02kpldz1dx', name: 'Sabiduria', display_name: 'Sabiduría', slug: null, emoji: null, metadata: '', articles_count: 100 },
+  { id: 'ydmdb581j4', name: 'Proposito', display_name: 'Propósito', slug: null, emoji: null, metadata: '', articles_count: 100 },
+  { id: 'jyknzd0k92', name: 'Maniana', display_name: 'Mañana', slug: null, emoji: null, metadata: '', articles_count: 100 },
+  { id: 'jqmz03012y', name: 'Noche', display_name: 'Noche', slug: null, emoji: null, metadata: '', articles_count: 100 },
+  { id: 'drmj7g5m2b', name: 'Antes de dormir', display_name: 'Antes de dormir', slug: null, emoji: null, metadata: '', articles_count: 100 },
+];
 
 /**
  * Respuesta del API de afirmaciones por categoría
@@ -290,10 +309,9 @@ class AffirmationSyncService {
     });
 
     try {
-      // Paso 1: Fetch entidades del backend
-      console.log('[AffirmationSync] Fetching entities from backend...');
-      const entities = await this.fetchEntities();
-      console.log(`[AffirmationSync] Fetched ${entities.length} entities from backend`);
+      // Paso 1: Usar entidades hardcodeadas (el endpoint /entities no existe en la API)
+      const entities = BACKEND_ENTITIES;
+      console.log(`[AffirmationSync] Using ${entities.length} hardcoded entities`);
 
       // Paso 2: Guardar lista de entidades en AsyncStorage
       await AsyncStorage.setItem(SYNC_KEYS.ENTITIES, JSON.stringify(entities));
@@ -384,40 +402,6 @@ class AffirmationSyncService {
   }
 
   /**
-   * Fetch de entidades (categorías) desde el backend
-   */
-  private async fetchEntities(): Promise<BackendEntity[]> {
-    const url = `${API_BASE_URL}/entities?limit=100`;
-    console.log(`[AffirmationSync] Fetching entities: ${url}`);
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.REQUEST_TIMEOUT_MS);
-
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(API_KEY && { 'Authorization': `Bearer ${API_KEY}` }),
-      },
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const data: EntitiesApiResponse = await response.json();
-
-    if (!data.entities || !Array.isArray(data.entities)) {
-      throw new Error('Invalid entities response: missing entities array');
-    }
-
-    return data.entities;
-  }
-
-  /**
    * Fetch paginado de afirmaciones para una entidad desde el API
    */
   private async fetchEntityAffirmations(
@@ -432,8 +416,8 @@ class AffirmationSyncService {
 
     while (hasMore) {
       try {
-        const url = `${API_BASE_URL}/affirmations/by-categories?id=${encodeURIComponent(FEED_ID || '')}&entity_ids=${encodeURIComponent(entity.id)}&limit=${limit}&random=0&offset=${offset}`;
-        console.log(`[AffirmationSync] Fetching ${url}`);
+        const url = `${API_BASE_URL}/versicles/by-categories?id=${encodeURIComponent(FEED_ID || '')}&entity_ids=${encodeURIComponent(entity.id)}&limit=${limit}&random=0&offset=${offset}`;
+        console.log(`[AffirmationSync] Fetching versicles: ${url}`);
 
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), this.REQUEST_TIMEOUT_MS);
@@ -441,15 +425,18 @@ class AffirmationSyncService {
         const response = await fetch(url, {
           method: 'GET',
           headers: {
-            'Content-Type': 'application/json',
+            'Accept': 'application/json',
             ...(API_KEY && { 'Authorization': `Bearer ${API_KEY}` }),
           },
           signal: controller.signal,
         });
 
         clearTimeout(timeoutId);
+        console.log(`[AffirmationSync] Versicles response status: ${response.status} for ${entity.name}`);
 
         if (!response.ok) {
+          const body = await response.text().catch(() => '');
+          console.error(`[AffirmationSync] Versicles error body: ${body}`);
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 

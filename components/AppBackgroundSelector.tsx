@@ -65,6 +65,41 @@ export const APP_BACKGROUNDS: BackgroundConfig[] = [
     imageSource: require('@/assets/images/backgrounds/midnight.jpg'),
     textColor: '#F9FAFB',
   },
+  { 
+    id: 'jesus-1', 
+    name: 'Jesús 1', 
+    isPremium: true,
+    imageSource: require('@/assets/images/backgrounds/jesus-1.png'),
+    textColor: '#FFFFFF',
+  },
+  {
+    id: 'jesus-2',
+    name: 'Jesús 2',
+    isPremium: true,
+    imageSource: require('@/assets/images/backgrounds/jesus-2.png'),
+    textColor: '#FFFFFF',
+  },
+  {
+    id: 'mountain',
+    name: 'Montaña',
+    isPremium: true,
+    imageSource: require('@/assets/images/backgrounds/mountain.png'),
+    textColor: '#FFFFFF',
+  },
+  {
+    id: 'mountain-2',
+    name: 'Montaña 2',
+    isPremium: true,
+    imageSource: require('@/assets/images/backgrounds/mountain-2.png'),
+    textColor: '#000000',
+  },
+  {
+    id: 'bible',
+    name: 'Biblia',
+    isPremium: true,
+    imageSource: require('@/assets/images/backgrounds/bible.png'),
+    textColor: '#FFFFFF',
+  }
 ];
 
 interface BackgroundOptionProps {

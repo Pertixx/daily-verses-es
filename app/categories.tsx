@@ -28,7 +28,6 @@ import { MixCard } from '@/components/MixCard';
 // Constants
 // ============================================================================
 
-const PERSONALIZED_MIX_ID = 'personalized-mix';
 const FAVORITES_MIX_ID = 'favorites-mix';
 const CUSTOM_PHRASES_MIX_ID = 'custom-phrases-mix';
 
@@ -94,7 +93,7 @@ export default function CategoriesScreen() {
 
   const loadData = async () => {
     try {
-      const [, favorites, customPhrases, customMixes, currentActiveMix, hasSubscription, availableCategories] = await Promise.all([
+      const [profile, favorites, customPhrases, customMixes, currentActiveMix, hasSubscription, availableCategories] = await Promise.all([
         storageService.getProfile(),
         storageService.getFavorites(),
         storageService.getCustomPhrases(),
@@ -109,12 +108,13 @@ export default function CategoriesScreen() {
       setFavoritesCount(favorites?.length || 0);
       setCustomPhrasesCount(customPhrases?.length || 0);
       setIsPremium(hasSubscription);
-      
-      // Si no hay mix activo, establecer el personalizado por defecto
-      if (currentActiveMix) {
+
+      // Si no hay mix activo o es el viejo "personalizado", usar primera categoría asignada
+      if (currentActiveMix && currentActiveMix.mixType !== 'personalized') {
         setActiveMix(currentActiveMix);
       } else {
-        const defaultMix: ActiveMixReference = { mixId: PERSONALIZED_MIX_ID, mixType: 'personalized' };
+        const firstCategory = profile?.assignedCategories?.[0] || 'esperanza';
+        const defaultMix: ActiveMixReference = { mixId: `category-${firstCategory}`, mixType: 'category' };
         setActiveMix(defaultMix);
         await storageService.setActiveMix(defaultMix);
       }
