@@ -4,7 +4,7 @@
     "slug": "tito",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icons/tito.png",
+    "icon": "./assets/icons/Tito.png",
     "scheme": "tito",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -31,8 +31,8 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#F5F0E8",
-        "foregroundImage": "./assets/icons/tito.png",
-        "monochromeImage": "./assets/icons/tito.png"
+        "foregroundImage": "./assets/icons/Tito.png",
+        "monochromeImage": "./assets/icons/Tito.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -40,14 +40,14 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/icons/tito.png"
+      "favicon": "./assets/icons/Tito.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/icons/tito.png",
+          "image": "./assets/icons/Tito.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#F5F0E8",
@@ -116,7 +116,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/icons/tito.png"
+          "icon": "./assets/icons/TitoIcon2.png"
         }
       ],
       [
@@ -125,77 +125,78 @@
           {
             "name": "TitoVariant1",
             "ios": {
-              "light": "./assets/icons/titoIconFlat.png",
-              "dark": "./assets/icons/titoIconFlat.png",
-              "tinted": "./assets/icons/titoIconFlat.png"
+              "light": "./assets/icons/TitoIconFlat.png",
+              "dark": "./assets/icons/TitoIconFlat.png",
+              "tinted": "./assets/icons/TitoIconFlat.png"
             },
             "android": {
-              "foregroundImage": "./assets/icons/titoIconFlat.png",
+              "foregroundImage": "./assets/icons/Tito.png",
               "backgroundColor": "#F5F0E8"
             }
           },
           {
             "name": "TitoVariant2",
             "ios": {
-              "light": "./assets/icons/titoIconFlat2.png",
-              "dark": "./assets/icons/titoIconFlat2.png",
-              "tinted": "./assets/icons/titoIconFlat2.png"
+              "light": "./assets/icons/TitoIconFlat2.png",
+              "dark": "./assets/icons/TitoIconFlat2.png",
+              "tinted": "./assets/icons/TitoIconFlat2.png"
             },
             "android": {
-              "foregroundImage": "./assets/icons/titoIconFlat2.png",
+              "foregroundImage": "./assets/icons/Tito.png",
               "backgroundColor": "#D4B896"
             }
           },
           {
             "name": "TitoVariant3",
             "ios": {
-              "light": "./assets/icons/titoPeekingIconFlat.png",
-              "dark": "./assets/icons/titoPeekingIconFlat.png",
-              "tinted": "./assets/icons/titoPeekingIconFlat.png"
+              "light": "./assets/icons/TitoPeekingIconFlat.png",
+              "dark": "./assets/icons/TitoPeekingIconFlat.png",
+              "tinted": "./assets/icons/TitoPeekingIconFlat.png"
             },
             "android": {
-              "foregroundImage": "./assets/icons/titoPeekingIconFlat.png",
+              "foregroundImage": "./assets/icons/TitoPeekingIconFlat.png",
               "backgroundColor": "#D4B896"
             }
           },
           {
             "name": "TitoVariant4",
             "ios": {
-              "light": "./assets/icons/titoSleepingIconFlat.png",
-              "dark": "./assets/icons/titoSleepingIconFlat.png",
-              "tinted": "./assets/icons/titoSleepingIconFlat.png"
+              "light": "./assets/icons/TitoSleepingIconFlat.png",
+              "dark": "./assets/icons/TitoSleepingIconFlat.png",
+              "tinted": "./assets/icons/TitoSleepingIconFlat.png"
             },
             "android": {
-              "foregroundImage": "./assets/icons/titoSleepingIconFlat.png",
+              "foregroundImage": "./assets/icons/TitoSleepingIconFlat.png",
               "backgroundColor": "#D4B896"
             }
           },
           {
             "name": "TitoVariant5",
             "ios": {
-              "light": "./assets/icons/titoPrayingIconFlat.png",
-              "dark": "./assets/icons/titoPrayingIconFlat.png",
-              "tinted": "./assets/icons/titoPrayingIconFlat.png"
+              "light": "./assets/icons/TitoPrayingIconFlat.png",
+              "dark": "./assets/icons/TitoPrayingIconFlat.png",
+              "tinted": "./assets/icons/TitoPrayingIconFlat.png"
             },
             "android": {
-              "foregroundImage": "./assets/icons/titoPrayingIconFlat.png",
+              "foregroundImage": "./assets/icons/TitoPrayingIconFlat.png",
               "backgroundColor": "#D4B896"
             }
           },
           {
             "name": "TitoVariant6",
             "ios": {
-              "light": "./assets/icons/titoReadingIconFlat.png",
-              "dark": "./assets/icons/titoReadingIconFlat.png",
-              "tinted": "./assets/icons/titoReadingIconFlat.png"
+              "light": "./assets/icons/TitoReadingIconFlat.png",
+              "dark": "./assets/icons/TitoReadingIconFlat.png",
+              "tinted": "./assets/icons/TitoReadingIconFlat.png"
             },
             "android": {
-              "foregroundImage": "./assets/icons/titoReadingIconFlat.png",
+              "foregroundImage": "./assets/icons/TitoReadingIconFlat.png",
               "backgroundColor": "#D4B896"
             }
           }
         ]
-      ]
+      ],
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true,

@@ -146,7 +146,7 @@ export default function NotificationsMissingScreen() {
     {
       icon: '⏰',
       title: 'Horarios personalizados',
-      description: 'Afirmaciones en tus momentos ideales, no a cualquier hora',
+      description: 'Versículos en tus momentos ideales, no a cualquier hora',
     },
     {
       icon: '🔥',
@@ -184,7 +184,7 @@ export default function NotificationsMissingScreen() {
       }
     >
       <OnboardingHeader
-        icon={require('@/assets/icons/tito.png')}
+        icon={require('@/assets/icons/Tito.png')}
         title="Te vas a perder..."
         subtitle="Sin notificaciones, no podrás aprovechar estas funciones diseñadas para tu bienestar"
       />

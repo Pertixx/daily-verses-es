@@ -4,8 +4,8 @@
 
 // URLs legales y de soporte
 export const LEGAL_URLS = {
-  termsOfService: 'https://mimoafirmacionesdiarias.com/terms.html',
-  privacyPolicy: 'https://mimoafirmacionesdiarias.com/privacy.html',
+  termsOfService: 'https://sagradapalabra.com/versiculos-diarios/terms',
+  privacyPolicy: 'https://sagradapalabra.com/versiculos-diarios/privacy',
   iOSEulaPolicy: 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/'
 } as const;
 

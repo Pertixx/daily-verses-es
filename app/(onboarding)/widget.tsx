@@ -184,9 +184,9 @@ export default function WidgetScreen() {
       }
     >
       <OnboardingHeader
-        icon={require('@/assets/icons/tito.png')}
+        icon={require('@/assets/icons/Tito.png')}
         title="Agregá un widget a tu pantalla"
-        subtitle="Empezá el día con afirmaciones que te levanten el ánimo apenas te despertás"
+        subtitle="Empezá el día con versículos que te levanten el ánimo apenas te despertás"
       />
 
       {/* iPhone Mockup with Widgets */}

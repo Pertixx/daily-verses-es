@@ -5,6 +5,7 @@ import { AnimatedButton, OnboardingContainer, OnboardingHeader } from '@/compone
 import { router } from 'expo-router';
 import { useColors } from '@/hooks';
 import { useMemo, useState, useEffect } from 'react';
+import { PACKAGE_TYPE } from 'react-native-purchases';
 import { analytics, revenueCatService } from '@/services';
 
 export default function FreeTrialScreen() {
@@ -21,7 +22,8 @@ export default function FreeTrialScreen() {
         }
         const offering = await revenueCatService.getOfferings();
         if (offering?.availablePackages?.length) {
-          const pkg = offering.availablePackages[0];
+          const monthlyPkg = offering.availablePackages.find(p => p.packageType === PACKAGE_TYPE.MONTHLY);
+          const pkg = monthlyPkg ?? offering.availablePackages[0];
           setPriceString(pkg.product.priceString + '/mes');
         } else {
           setPriceString('$0.99/mes');

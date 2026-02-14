@@ -52,7 +52,7 @@ export default function AppIconScreen() {
       }
     >
       <OnboardingHeader
-        icon={require('@/assets/icons/tito.png')}
+        icon={require('@/assets/icons/Tito.png')}
         title="Elegí tu ícono de Tito"
         subtitle="Personalizá cómo se ve Tito en tu pantalla de inicio"
       />

@@ -28,7 +28,7 @@ export default function NotificationsScreen() {
     } else {
       Alert.alert(
         'Permisos necesarios',
-        'Para recibir afirmaciones diarias, necesitamos tu permiso para enviar notificaciones. Puedes cambiar esto después en Configuración.',
+        'Para recibir versículos diarios, necesitamos tu permiso para enviar notificaciones. Puedes cambiar esto después en Configuración.',
         [
           { text: 'Continuar sin notificaciones', style: 'cancel', onPress: handleSkip },
           { text: 'Reintentar', onPress: handleAllow },
@@ -73,7 +73,7 @@ export default function NotificationsScreen() {
             <View style={styles.dialogHeader}>
               <View style={styles.appIconContainer}>
                 <View style={styles.appIconInner}>
-                  <Image style={styles.appIcon} source={require('@/assets/icons/tito.png')} />
+                  <Image style={styles.appIcon} source={require('@/assets/icons/Tito.png')} />
                 </View>
               </View>
               

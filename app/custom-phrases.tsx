@@ -229,7 +229,7 @@ export default function CustomPhrasesScreen() {
               Crea tu primera frase
             </Text>
             <Text style={[styles.emptyDescription, { color: colors.textSecondary }]}>
-              Escribe afirmaciones personalizadas que te inspiren cada día
+              Escribe versículos personalizados que te inspiren cada día
             </Text>
           </Animated.View>
         )}

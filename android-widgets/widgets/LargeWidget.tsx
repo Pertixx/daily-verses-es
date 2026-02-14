@@ -75,7 +75,9 @@ export function LargeWidget(props: LargeWidgetProps) {
         }}
       >
         <ImageWidget
-          image="tito_logo"
+          image={require('../../assets/icons/Tito.png')}
+          imageWidth={64}
+          imageHeight={64}
           style={{
             width: 64,
             height: 64,

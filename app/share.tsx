@@ -59,31 +59,31 @@ interface TitoOutfit {
 const TITO_OUTFITS: TitoOutfit[] = [
   {
     id: 'default',
-    source: require('@/assets/icons/tito.png'),
+    source: require('@/assets/icons/Tito.png'),
     label: 'Tito',
     style: { width: 150, height: 150, bottomOffset: -0.1, leftOffset: -0.13 },
   },
   {
     id: 'greetings',
-    source: require('@/assets/icons/titoGreetings.png'),
+    source: require('@/assets/icons/TitoGreetings.png'),
     label: 'Saludo',
     style: { width: 150, height: 150, bottomOffset: -0.1, leftOffset: -0.13 },
   },
   {
     id: 'stamp',
-    source: require('@/assets/icons/titoPraying.png'),
+    source: require('@/assets/icons/TitoPraying.png'),
     label: 'Sello',
     style: { width: 150, height: 150, bottomOffset: -0.1, leftOffset: -0.13 },
   },
   {
     id: 'sleeps',
-    source: require('@/assets/icons/titoSleeping.png'),
+    source: require('@/assets/icons/TitoSleeping.png'),
     label: 'Duerme',
     style: { width: 150, height: 150, bottomOffset: -0.1, leftOffset: -0.13 },
   },
   {
     id: 'peeking',
-    source: require('@/assets/icons/titoPeeking.png'),
+    source: require('@/assets/icons/TitoPeeking.png'),
     label: 'Asomándose',
     style: { width: 150, height: 150, bottomOffset: -0.1, leftOffset: -0.4 },
   },
@@ -92,7 +92,7 @@ const TITO_OUTFITS: TitoOutfit[] = [
 // Estado "hidden" no tiene imagen, es el último estado del ciclo
 const TITO_STATES: TitoOutfitId[] = [...TITO_OUTFITS.map(o => o.id), 'hidden'];
 
-const TITO_DOWNLOAD_URL = 'https://mimoafirmacionesdiarias.com/download';
+const TITO_DOWNLOAD_URL = 'https://sagradapalabra.com/versiculos-diarios/download';
 
 export default function ShareScreen() {
   const router = useRouter();

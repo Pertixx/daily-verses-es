@@ -143,7 +143,7 @@ export function TimeRangeSelector({
         <View style={styles.hint}>
           <Ionicons name="information-circle-outline" size={16} color={colors.textMuted} />
           <Text style={styles.hintText}>
-            Recibirás {frequency} {frequency === 1 ? 'afirmación' : 'afirmaciones'} distribuidas entre las {formatHour(startHour)} y las {formatHour(endHour)}
+            Recibirás {frequency} {frequency === 1 ? 'versículo' : 'versículos'} distribuidos entre las {formatHour(startHour)} y las {formatHour(endHour)}
           </Text>
         </View>
       )}

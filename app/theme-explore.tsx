@@ -128,7 +128,7 @@ export default function ThemeExploreScreen() {
         style={styles.titoContainer}
       >
         <Image
-          source={require('@/assets/icons/tito.png')}
+          source={require('@/assets/icons/Tito.png')}
           style={styles.titoImage}
           resizeMode="contain"
         />
@@ -233,7 +233,7 @@ export default function ThemeExploreScreen() {
               Fondo de pantalla
             </Text>
             <Text style={[styles.sectionDescription, { color: colors.textSecondary }]}>
-              Elegí el fondo para tus afirmaciones
+              Elegí el fondo para tus versículos diarios
             </Text>
             
             <View style={styles.selectorContainer}>

@@ -75,7 +75,9 @@ export function MediumWidget(props: MediumWidgetProps) {
         }}
       >
         <ImageWidget
-          image="tito_logo"
+          image={require('../../assets/icons/Tito.png')}
+          imageWidth={50}
+          imageHeight={50}
           style={{
             width: 50,
             height: 50,

@@ -324,7 +324,7 @@ export default function TrialPaywallScreen() {
           {/* Logo/Imagen */}
           <Animated.View entering={FadeInDown.delay(100).duration(500)}>
             <Image
-              source={require('@/assets/icons/tito.png')}
+              source={require('@/assets/icons/Tito.png')}
               style={styles.logo}
               contentFit="contain"
             />

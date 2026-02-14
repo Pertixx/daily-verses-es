@@ -94,7 +94,7 @@ const PREMIUM_FEATURES: PremiumFeature[] = [
   {
     icon: 'th-large',
     title: 'Todas las categorías',
-    description: 'Desbloquea las 18 categorías de versículos',
+    description: 'Desbloquea las 17 categorías de versículos',
   },
   {
     icon: 'volume-up',
@@ -339,7 +339,7 @@ export default function PaywallScreen() {
           style={styles.headerContent}
         >
           <Image
-            source={require('@/assets/icons/tito.png')}
+            source={require('@/assets/icons/Tito.png')}
             style={styles.logo}
             contentFit="contain"
           />

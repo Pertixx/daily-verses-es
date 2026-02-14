@@ -18,6 +18,7 @@ export interface BackgroundConfig {
   name: string;
   isPremium: boolean;
   imageSource?: any;      // Imagen de fondo (para premium)
+  imageMiniSource?: any;  // Imagen miniatura para la selección
   solidColor?: string;    // Color sólido (para default)
   textColor: string;      // Color del texto "Aa"
 }
@@ -35,6 +36,7 @@ export const APP_BACKGROUNDS: BackgroundConfig[] = [
     name: 'Atardecer', 
     isPremium: true,
     imageSource: require('@/assets/images/backgrounds/sunset.jpg'),
+    imageMiniSource: require('@/assets/images/backgrounds/mini/sunset.jpg'),
     textColor: '#FFFFFF',
   },
   { 
@@ -42,6 +44,7 @@ export const APP_BACKGROUNDS: BackgroundConfig[] = [
     name: 'Océano', 
     isPremium: true,
     imageSource: require('@/assets/images/backgrounds/ocean.jpg'),
+    imageMiniSource: require('@/assets/images/backgrounds/mini/ocean.jpg'),
     textColor: '#1F2937',
   },
   { 
@@ -49,6 +52,7 @@ export const APP_BACKGROUNDS: BackgroundConfig[] = [
     name: 'Bosque', 
     isPremium: true,
     imageSource: require('@/assets/images/backgrounds/forest.jpg'),
+    imageMiniSource: require('@/assets/images/backgrounds/mini/forest.jpg'),
     textColor: '#FFFFFF',
   },
   { 
@@ -56,6 +60,7 @@ export const APP_BACKGROUNDS: BackgroundConfig[] = [
     name: 'Lavanda', 
     isPremium: true,
     imageSource: require('@/assets/images/backgrounds/lavender.jpg'),
+    imageMiniSource: require('@/assets/images/backgrounds/mini/lavender.jpg'),
     textColor: '#FFFFFF',
   },
   { 
@@ -63,41 +68,47 @@ export const APP_BACKGROUNDS: BackgroundConfig[] = [
     name: 'Medianoche', 
     isPremium: true,
     imageSource: require('@/assets/images/backgrounds/midnight.jpg'),
+    imageMiniSource: require('@/assets/images/backgrounds/mini/midnight.jpg'),
     textColor: '#F9FAFB',
   },
   { 
     id: 'jesus-1', 
     name: 'Jesús 1', 
     isPremium: true,
-    imageSource: require('@/assets/images/backgrounds/jesus-1.png'),
+    imageSource: require('@/assets/images/backgrounds/jesus-1.jpg'),
+    imageMiniSource: require('@/assets/images/backgrounds/mini/jesus-1.jpg'),
     textColor: '#FFFFFF',
   },
   {
     id: 'jesus-2',
     name: 'Jesús 2',
     isPremium: true,
-    imageSource: require('@/assets/images/backgrounds/jesus-2.png'),
+    imageSource: require('@/assets/images/backgrounds/jesus-2.jpg'),
+    imageMiniSource: require('@/assets/images/backgrounds/mini/jesus-2.jpg'),
     textColor: '#FFFFFF',
   },
   {
     id: 'mountain',
     name: 'Montaña',
     isPremium: true,
-    imageSource: require('@/assets/images/backgrounds/mountain.png'),
+    imageSource: require('@/assets/images/backgrounds/mountain.jpg'),
+    imageMiniSource: require('@/assets/images/backgrounds/mini/mountain.jpg'),
     textColor: '#FFFFFF',
   },
   {
     id: 'mountain-2',
     name: 'Montaña 2',
     isPremium: true,
-    imageSource: require('@/assets/images/backgrounds/mountain-2.png'),
+    imageSource: require('@/assets/images/backgrounds/mountain-2.jpg'),
+    imageMiniSource: require('@/assets/images/backgrounds/mini/mountain-2.jpg'),
     textColor: '#000000',
   },
   {
     id: 'bible',
     name: 'Biblia',
     isPremium: true,
-    imageSource: require('@/assets/images/backgrounds/bible.png'),
+    imageSource: require('@/assets/images/backgrounds/bible.jpg'),
+    imageMiniSource: require('@/assets/images/backgrounds/mini/bible.jpg'),
     textColor: '#FFFFFF',
   }
 ];
@@ -166,9 +177,9 @@ function BackgroundOption({
         <View style={styles.phoneFrame}>
           <View style={[styles.phoneScreen, backgroundColor ? { backgroundColor } : undefined]}>
             {/* Background image for premium variants */}
-            {!isDefault && background.imageSource && (
+            {!isDefault && background.imageMiniSource && background.imageSource && (
               <Image
-                source={background.imageSource}
+                source={background.imageMiniSource}
                 style={styles.backgroundImage}
                 contentFit="cover"
               />

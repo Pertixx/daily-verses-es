@@ -5,6 +5,7 @@ import { Spacing, ThemeColors, Typography } from '@/constants/theme';
 import { ONBOARDING_PROGRESS_STEPS, ONBOARDING_STEP_MAP } from '@/constants/onboarding';
 import { AnimatedButton, OnboardingContainer, OnboardingHeader } from '@/components/onboarding';
 import { useColors } from '@/hooks';
+import { PACKAGE_TYPE } from 'react-native-purchases';
 import { analytics, revenueCatService } from '@/services';
 
 export default function FreeTrialReminderScreen() {
@@ -21,7 +22,8 @@ export default function FreeTrialReminderScreen() {
         }
         const offering = await revenueCatService.getOfferings();
         if (offering?.availablePackages?.length) {
-          const pkg = offering.availablePackages[0];
+          const monthlyPkg = offering.availablePackages.find(p => p.packageType === PACKAGE_TYPE.MONTHLY);
+          const pkg = monthlyPkg ?? offering.availablePackages[0];
           setPriceString(pkg.product.priceString + '/mes');
         } else {
           setPriceString('$0.99/mes');
@@ -60,7 +62,7 @@ export default function FreeTrialReminderScreen() {
         style={styles.offerContainer}
       >
         <OnboardingHeader
-          icon={require('@/assets/icons/tito.png')}
+          icon={require('@/assets/icons/Tito.png')}
           title="Te vamos a mandar un recordatorio 1 día antes de que termine tu prueba gratuita"
           subtitle="Sin sorpresas, sin presión"
         />

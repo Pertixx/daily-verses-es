@@ -247,7 +247,7 @@ export default function CategoriesScreen() {
         <View style={styles.headerCenter}>
           <Text style={[styles.headerTitle, { color: colors.text }]}>Categorías</Text>
           <Image 
-            source={require('@/assets/icons/tito.png')} 
+            source={require('@/assets/icons/Tito.png')} 
             style={styles.headerIcon} 
           />
         </View>

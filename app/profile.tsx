@@ -121,7 +121,7 @@ export default function ProfileScreen() {
           </Text>
           <View style={styles.avatarContainer}>
             <Image
-              source={require('@/assets/icons/tito.png')}
+              source={require('@/assets/icons/Tito.png')}
               style={styles.avatarImage}
               resizeMode="contain"
             />

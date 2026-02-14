@@ -51,7 +51,7 @@ export default function VibeScreen() {
       }
     >
       <OnboardingHeader
-        icon={require('@/assets/icons/tito.png')}
+        icon={require('@/assets/icons/Tito.png')}
         title="Elegí tu estilo"
         subtitle="Personalizá el fondo de tus versículos diarios"
       />
