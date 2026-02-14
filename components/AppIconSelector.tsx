@@ -37,29 +37,29 @@ export const APP_ICONS: {
     isPremium: true,
     iconSource: require('@/assets/icons/titoIconFlat2.png'),
   },
-  { 
-    id: 'variant-3', 
-    name: 'Tito Text', 
+  {
+    id: 'variant-3',
+    name: 'Tito Peeking',
     isPremium: true,
     iconSource: require('@/assets/icons/titoPeekingIconFlat.png'),
   },
-  { 
-    id: 'variant-4', 
-    name: 'Tito Text', 
+  {
+    id: 'variant-4',
+    name: 'Tito Sleeping',
+    isPremium: false,
+    iconSource: require('@/assets/icons/titoSleepingIconFlat.png'),
+  },
+  {
+    id: 'variant-5',
+    name: 'Tito Praying',
     isPremium: true,
     iconSource: require('@/assets/icons/titoPrayingIconFlat.png'),
   },
-  { 
-    id: 'variant-5', 
-    name: 'Tito Text', 
+  {
+    id: 'variant-6',
+    name: 'Tito Reading',
     isPremium: true,
     iconSource: require('@/assets/icons/titoReadingIconFlat.png'),
-  },
-  { 
-    id: 'variant-6', 
-    name: 'Tito Text', 
-    isPremium: true,
-    iconSource: require('@/assets/icons/titoSleepingIconFlat.png'),
   },
 ];
 

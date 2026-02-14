@@ -6,7 +6,8 @@ import {
   ActivityIndicator,
   Alert,
   Linking,
-  Modal 
+  Modal,
+  ScrollView 
 } from 'react-native';
 import { LEGAL_URLS } from '@/types';
 import { router } from 'expo-router';
@@ -296,9 +297,9 @@ export default function TrialPaywallScreen() {
   }, []);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header con botón de cerrar */}
-      <View style={[styles.header, { paddingTop: insets.top + Spacing.xs }]}>
+      <View style={[styles.header, { paddingTop: 10}]}>
         <Pressable 
           onPress={handleClose} 
           style={styles.closeButton}
@@ -494,7 +495,7 @@ export default function TrialPaywallScreen() {
           </Animated.View>
         </View>
       </Modal>
-    </View>
+    </ScrollView>
   );
 }
 

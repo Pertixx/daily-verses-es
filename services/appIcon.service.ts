@@ -24,12 +24,13 @@ try {
  * El nombre debe coincidir con lo configurado en app.json
  */
 const ICON_NAME_MAP: Record<AppIconType, string | null> = {
-  'default': null, // null = ícono principal
-  'variant-1': 'MimoVariant1',
-  'variant-2': 'MimoVariant2',
-  'variant-3': 'MimoVariant3',
-  'variant-4': 'MimoVariant4',
-  'variant-5': 'MimoVariant5',
+  'default': 'TitoDefault', // Configurado como ícono alternativo explícito para evitar problemas con null
+  'variant-1': 'TitoVariant1',
+  'variant-2': 'TitoVariant2',
+  'variant-3': 'TitoVariant3',
+  'variant-4': 'TitoVariant4',
+  'variant-5': 'TitoVariant5',
+  'variant-6': 'TitoVariant6',
 };
 
 /**
@@ -77,19 +78,45 @@ class AppIconService {
     try {
       // Siempre guardamos la preferencia, incluso si no podemos cambiar el ícono ahora
       await storageService.updateProfile({ appIcon: iconType });
-      
+
       if (!AlternateAppIcons || !isNativeModuleAvailable) {
         console.warn('⚠️ No se puede cambiar el ícono (requiere development build)');
         return false;
       }
 
       const iconName = ICON_NAME_MAP[iconType];
+
+      // Log adicional para debug
+      console.log('🔍 Intentando cambiar a:', { iconType, iconName, isSupported: isNativeModuleAvailable });
+
+      // Intentar obtener el ícono actual primero para verificar que el módulo funciona
+      const currentIcon = AlternateAppIcons.getAppIconName();
+      console.log('🔍 Ícono actual:', currentIcon);
+
+      // Si el ícono ya está activo, no hacer nada
+      if (currentIcon === iconName) {
+        console.log('✅ El ícono ya está activo');
+        return true;
+      }
+
+      // Delay para evitar rate limiting de iOS
+      // iOS limita la frecuencia de cambios de ícono
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       await AlternateAppIcons.setAlternateAppIcon(iconName);
-      
+
       console.log(`✅ Ícono de app cambiado a: ${iconType}`);
       return true;
     } catch (error) {
-      console.error('Error al cambiar ícono de app:', error);
+      console.error('❌ Error al cambiar ícono de app:', error);
+      // Log más detallado del error
+      if (error instanceof Error) {
+        console.error('Error details:', {
+          message: error.message,
+          name: error.name,
+          stack: error.stack,
+        });
+      }
       return false;
     }
   }
