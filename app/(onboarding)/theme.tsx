@@ -50,7 +50,7 @@ export default function ThemeScreen() {
 
   const handleContinue = async () => {
     analytics.track('onboarding_step_completed', { step: 'theme', step_number: ONBOARDING_STEP_MAP.theme });
-    router.push('/(onboarding)/appIcon');
+    router.push('/(onboarding)/vibe');
   };
 
   const handleThemeSelect = async (theme: Theme) => {

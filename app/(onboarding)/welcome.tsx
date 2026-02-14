@@ -76,7 +76,7 @@ export default function WelcomeScreen() {
           >
             <View style={styles.imageGlow} />
             <Image
-              source={require('@/assets/icons/titoGreetings.png')}
+              source={require('@/assets/icons/TitoGreetings.png')}
               style={styles.heroImage}
               contentFit="contain"
             />

@@ -28,19 +28,19 @@ export const APP_ICONS: {
   { 
     id: 'variant-1', 
     name: 'Tito Sunset', 
-    isPremium: false,
+    isPremium: true,
     iconSource: require('@/assets/icons/TitoIconFlat.png'),
   },
   { 
     id: 'variant-2', 
     name: 'Tito Text', 
-    isPremium: false,
+    isPremium: true,
     iconSource: require('@/assets/icons/TitoIconFlat2.png'),
   },
   {
     id: 'variant-3',
     name: 'Tito Peeking',
-    isPremium: false,
+    isPremium: true,
     iconSource: require('@/assets/icons/TitoPeekingIconFlat.png'),
   },
   {

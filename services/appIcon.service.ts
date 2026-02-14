@@ -85,13 +85,36 @@ class AppIconService {
       }
 
       const iconName = ICON_NAME_MAP[iconType];
-      await AlternateAppIcons.setAlternateAppIcon(iconName);
+      await this.setIconWithRetry(iconName);
 
       console.log(`✅ Ícono de app cambiado a: ${iconType}`);
       return true;
     } catch (error) {
       console.error('Error al cambiar ícono de app:', error);
       return false;
+    }
+  }
+
+  /**
+   * Intenta cambiar el ícono con reintentos para evitar el error
+   * "Resource temporarily unavailable" de iOS
+   */
+  private async setIconWithRetry(iconName: string | null, maxRetries = 3): Promise<void> {
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        await AlternateAppIcons!.setAlternateAppIcon(iconName);
+        return;
+      } catch (error) {
+        const isResourceBusy = error instanceof Error &&
+          error.message.includes('Resource temporarily unavailable');
+
+        if (!isResourceBusy || attempt === maxRetries - 1) {
+          throw error;
+        }
+
+        // Esperar antes de reintentar (500ms, 1000ms, 1500ms)
+        await new Promise(resolve => setTimeout(resolve, (attempt + 1) * 500));
+      }
     }
   }
 

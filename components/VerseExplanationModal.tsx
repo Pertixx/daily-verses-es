@@ -105,7 +105,7 @@ function TitoParticle({ particle }: { particle: TitoParticleData }) {
   return (
     <Animated.View style={[styles.titoParticle, animatedStyle]}>
       <Image
-        source={require('@/assets/icons/titoPraying.png')}
+        source={require('@/assets/icons/TitoPraying.png')}
         style={{ width: particle.size, height: particle.size }}
         contentFit="contain"
       />

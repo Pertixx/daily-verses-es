@@ -62,7 +62,7 @@ export default function FreeTrialScreen() {
         style={styles.offerContainer}
       >
         <OnboardingHeader
-          icon={require('@/assets/icons/titoPremium.png')}
+          icon={require('@/assets/icons/TitoPremium.png')}
           title="Probá Premium gratis por 3 días"
           subtitle={`Luego ${priceString} • Cancelá cuando quieras`}
         />
